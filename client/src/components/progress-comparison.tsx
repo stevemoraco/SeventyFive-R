@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { DailyTask } from "@shared/schema";
+import { ProgressPhoto } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
 
 export function ProgressComparison() {
-  const { data: photos } = useQuery<DailyTask[]>({
+  const { data: photos } = useQuery<ProgressPhoto[]>({
     queryKey: ["/api/progress/photos"],
   });
 
@@ -21,7 +21,7 @@ export function ProgressComparison() {
   const firstPhoto = photos[0];
   const latestPhoto = photos[photos.length - 1];
 
-  // Only hide if they're the exact same photo
+  // Only show if we have different photos
   if (!firstPhoto?.photoUrl || !latestPhoto?.photoUrl || firstPhoto.id === latestPhoto.id) {
     console.log('Same photo or missing URLs');
     return null;
@@ -35,7 +35,6 @@ export function ProgressComparison() {
         url: window.location.href,
       });
     } catch (err) {
-      // Sharing failed or was cancelled
       console.error("Error sharing:", err);
     }
   };

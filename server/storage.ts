@@ -1,6 +1,6 @@
-import { users, dailyTasks, userProgress, type User, type InsertUser, type DailyTask, type UserProgress, type CustomChallenge } from "@shared/schema";
+import { users, dailyTasks, userProgress, progressPhotos, type User, type InsertUser, type DailyTask, type UserProgress, type CustomChallenge, type ProgressPhoto } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -16,6 +16,8 @@ export interface IStorage {
   updateDailyTasks(userId: number, date: Date, updates: Partial<DailyTask>): Promise<DailyTask>;
   getUserProgress(userId: number): Promise<UserProgress>;
   getUserPhotos(userId: number): Promise<DailyTask[]>;
+  addProgressPhoto(userId: number, date: string, photoUrl: string, notes?: string): Promise<ProgressPhoto>;
+  getProgressPhotos(userId: number): Promise<ProgressPhoto[]>;
   sessionStore: session.Store;
 }
 
@@ -96,8 +98,10 @@ export class DatabaseStorage implements IStorage {
     const dateStr = date.toISOString().split('T')[0];
     const [tasks] = await db.select()
       .from(dailyTasks)
-      .where(eq(dailyTasks.userId, userId))
-      .where(eq(dailyTasks.date, dateStr));
+      .where(and(
+        eq(dailyTasks.userId, userId),
+        eq(dailyTasks.date, dateStr)
+      ));
 
     if (!tasks) {
       const [newTasks] = await db.insert(dailyTasks).values({
@@ -316,8 +320,30 @@ export class DatabaseStorage implements IStorage {
   async getUserPhotos(userId: number): Promise<DailyTask[]> {
     return db.select()
       .from(dailyTasks)
-      .where(eq(dailyTasks.userId, userId))
-      .where(eq(dailyTasks.photoTaken, true));
+      .where(and(
+        eq(dailyTasks.userId, userId),
+        eq(dailyTasks.photoTaken, true)
+      ));
+  }
+
+  async addProgressPhoto(userId: number, date: string, photoUrl: string, notes?: string): Promise<ProgressPhoto> {
+    const [photo] = await db.insert(progressPhotos)
+      .values({
+        userId,
+        date,
+        photoUrl,
+        timestamp: new Date().toISOString(),
+        notes,
+      })
+      .returning();
+    return photo;
+  }
+
+  async getProgressPhotos(userId: number): Promise<ProgressPhoto[]> {
+    return db.select()
+      .from(progressPhotos)
+      .where(eq(progressPhotos.userId, userId))
+      .orderBy(desc(progressPhotos.timestamp));
   }
 }
 

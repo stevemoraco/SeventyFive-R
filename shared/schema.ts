@@ -100,6 +100,16 @@ export const userProgress = pgTable("user_progress", {
   totalPhotos: integer("total_photos").default(0).notNull(),
 });
 
+// Add new table for photos
+export const progressPhotos = pgTable("progress_photos", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  date: text("date").notNull(),
+  photoUrl: text("photo_url").notNull(),
+  timestamp: text("timestamp").notNull(),
+  notes: text("notes"),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -113,3 +123,5 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type DailyTask = typeof dailyTasks.$inferSelect;
 export type UserProgress = typeof userProgress.$inferSelect;
+export type ProgressPhoto = typeof progressPhotos.$inferSelect;
+export const insertProgressPhotoSchema = createInsertSchema(progressPhotos);
