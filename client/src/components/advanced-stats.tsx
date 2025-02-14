@@ -52,7 +52,7 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
   ];
 
   // Calculate achievement progress
-  const userAchievements = (progress.achievements as Record<string, boolean>) || {};
+  const userAchievements = (progress.stats as Record<string, boolean>) || {};
   const totalAchievements = allAchievements.length;
   const unlockedAchievements = Object.values(userAchievements).filter(Boolean).length;
   const achievementProgress = (unlockedAchievements / totalAchievements) * 100;
@@ -109,7 +109,7 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
             <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
               <p className="text-sm text-muted-foreground mb-2">Previous Attempts:</p>
               <div className="flex flex-wrap gap-2">
-                {(progress.previousStreaks as number[]).map((streak, index) => (
+                {progress.previousStreaks.map((streak, index) => (
                   <span key={index} className="px-2 py-1 text-sm bg-background rounded-full border border-red-200 dark:border-red-900">
                     {streak} days
                   </span>

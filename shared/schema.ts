@@ -48,7 +48,7 @@ export const users = pgTable("users", {
   challengeType: text("challenge_type").notNull().default("75hard"),
   startDate: text("start_date"),
   currentDay: integer("current_day").default(1),
-  achievements: json("achievements").default({}).notNull(),
+  achievements: json("achievements").$type<Record<string, boolean>>().default({}).notNull(),
   customChallenges: json("custom_challenges").default([]).notNull(),
   currentCustomChallengeId: text("current_custom_challenge_id"),
   challengeStats: json("challenge_stats").default({
@@ -94,18 +94,16 @@ export const userProgress = pgTable("user_progress", {
   totalWaterGallons: integer("total_water_gallons").default(0).notNull(),
   totalReadingMinutes: integer("total_reading_minutes").default(0).notNull(),
   streakDays: integer("streak_days").default(0).notNull(),
-  stats: json("stats").default({}).notNull(),
+  stats: json("stats").$type<Record<string, number>>().default({}).notNull(),
   perfectDays: integer("perfect_days").default(0).notNull(),
   longestStreak: integer("longest_streak").default(0).notNull(),
   totalPhotos: integer("total_photos").default(0).notNull(),
-  // Add new fields for tracking failures
   totalRestarts: integer("total_restarts").default(0).notNull(),
   daysLost: integer("days_lost").default(0).notNull(),
   lastRestartDate: text("last_restart_date"),
-  previousStreaks: json("previous_streaks").default([]).notNull(), // Array of previous streak lengths
+  previousStreaks: json("previous_streaks").$type<number[]>().default([]).notNull(),
 });
 
-// Add new table for photos
 export const progressPhotos = pgTable("progress_photos", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
