@@ -22,25 +22,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   app.get("/api/tasks/today", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const tasks = await storage.getDailyTasks(req.user.id, new Date());
+    const userId = req.user?.id || 0; // Use 0 for anonymous users
+    const tasks = await storage.getDailyTasks(userId, new Date());
     res.json(tasks);
   });
 
   app.patch("/api/tasks/today", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const tasks = await storage.updateDailyTasks(req.user.id, new Date(), req.body);
+    const userId = req.user?.id || 0;
+    const tasks = await storage.updateDailyTasks(userId, new Date(), req.body);
     res.json(tasks);
   });
 
   app.get("/api/progress", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.user) return res.json({
+      totalWorkouts: 0,
+      totalWaterGallons: 0,
+      totalReadingMinutes: 0,
+      streakDays: 0,
+      stats: {}
+    });
     const progress = await storage.getUserProgress(req.user.id);
     res.json(progress);
   });
 
   app.get("/api/progress/photos", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.user) return res.json([]);
     const photos = await storage.getUserPhotos(req.user.id);
     res.json(photos);
   });
@@ -52,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tasks/today/photo", upload.single("photo"), async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Please sign in to upload photos" });
     if (!req.file) return res.status(400).send("No file uploaded");
 
     const photoUrl = `/uploads/${req.file.filename}`;
