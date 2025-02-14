@@ -7,11 +7,59 @@ import { CustomChallengeCreator } from "@/components/custom-challenge-creator";
 import { ReminderSettingsCard } from "@/components/reminder-settings";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { PageHeader } from "@/components/page-header";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, LogIn } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Link } from "wouter";
 
 export default function ProfilePage() {
   const { user, logoutMutation } = useAuth();
+
+  if (!user) {
+    return (
+      <div className="pb-20">
+        <PageHeader title="Profile & Settings" />
+        <div className="p-4 space-y-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <h2 className="text-lg font-medium">Sign in to access your profile</h2>
+                <p className="text-sm text-muted-foreground">
+                  Create an account or sign in to track your progress and customize your experience
+                </p>
+                <Link href="/auth">
+                  <Button className="w-full">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium">Theme Settings</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Choose your preferred appearance
+                      </p>
+                    </div>
+                    <ThemeSwitcher />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <ChallengeGallery />
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-20">
