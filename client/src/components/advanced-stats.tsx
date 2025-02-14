@@ -1,6 +1,8 @@
 import { UserProgress } from "@shared/schema";
 import { Card } from "@/components/ui/card";
 import { Trophy, Star, Calendar, Flame, AlertTriangle, History } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { achievements as allAchievements } from "@shared/achievements";
 
 interface AdvancedStatsProps {
   progress: UserProgress;
@@ -49,11 +51,23 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
     },
   ];
 
+  // Calculate achievement progress
+  const userAchievements = (progress.achievements as Record<string, boolean>) || {};
+  const totalAchievements = allAchievements.length;
+  const unlockedAchievements = Object.values(userAchievements).filter(Boolean).length;
+  const achievementProgress = (unlockedAchievements / totalAchievements) * 100;
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Achievements & Milestones</h2>
-        <div className="grid grid-cols-2 gap-4 mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-semibold">Achievements & Milestones</h2>
+          <span className="text-sm text-muted-foreground">
+            {unlockedAchievements} / {totalAchievements}
+          </span>
+        </div>
+        <Progress value={achievementProgress} className="h-2 mb-6" />
+        <div className="grid grid-cols-2 gap-4">
           {achievements.map((achievement) => (
             <Card key={achievement.label} className="p-4">
               <div className="flex items-center space-x-3">
