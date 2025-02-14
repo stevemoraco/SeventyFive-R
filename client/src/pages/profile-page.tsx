@@ -41,8 +41,8 @@ export default function ProfilePage() {
               </div>
 
               <Button
-                variant="destructive"
-                className="w-full"
+                variant="ghost"
+                className="w-full text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 onClick={() => logoutMutation.mutate()}
               >
                 <LogOut className="h-4 w-4 mr-2" />
