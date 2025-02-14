@@ -1,15 +1,30 @@
 import { useAuth } from "@/hooks/use-auth";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
+import { useQuery } from "@tanstack/react-query";
 
 export function DashboardHeader() {
   const { user } = useAuth();
-  const currentDay = user?.currentDay || 1;
+  const currentDay = 1; // Always Day 1
   const today = new Date();
   const formattedDate = format(today, "'Progress for Day' d '—' EEEE, MMMM do, yyyy");
 
-  // Calculate daily progress (completed tasks / total tasks)
-  const dailyProgress = 60; // This should be calculated based on completed tasks
+  // Fetch daily tasks to calculate progress
+  const { data: dailyTasks } = useQuery({
+    queryKey: ["/api/tasks/today"],
+    select: (data: Record<string, unknown>) => {
+      const completedTasks = Object.values(data).filter(value => 
+        typeof value === 'boolean' && value
+      ).length;
+      const totalTasks = Object.values(data).filter(value => 
+        typeof value === 'boolean'
+      ).length;
+      return totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    },
+  });
+
+  // Calculate daily progress based on completed tasks
+  const dailyProgress = dailyTasks || 0;
   const totalProgress = (currentDay / 75) * 100;
 
   return (
