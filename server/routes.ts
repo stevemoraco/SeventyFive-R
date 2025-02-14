@@ -80,13 +80,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/progress/photos", async (req, res) => {
     console.log("Fetching photos for user:", req.user?.id);
-    if (!req.user) {
-      console.log("No authenticated user");
-      return res.json([]);
+    // Only return photos if user is authenticated and photos belong to them
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Please sign in to view your progress photos" });
     }
     const photos = await storage.getProgressPhotos(req.user.id);
     console.log("Found photos:", photos.length);
     res.json(photos);
+  });
+
+  // Serve static files from uploads directory, but only if authenticated and the photo belongs to the user
+  app.get("/uploads/:filename", async (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Please sign in to view photos" });
+    }
+
+    // Get all photos for the user
+    const userPhotos = await storage.getProgressPhotos(req.user.id);
+    const isUserPhoto = userPhotos.some(photo => photo.photoUrl === `/uploads/${req.params.filename}`);
+
+    if (!isUserPhoto) {
+      return res.status(403).json({ message: "You don't have permission to view this photo" });
+    }
+
+    // If authenticated and photo belongs to user, serve the file
+    res.sendFile(path.join(uploadsDir, req.params.filename));
   });
 
   app.post("/api/challenges/custom", async (req, res) => {

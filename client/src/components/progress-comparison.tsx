@@ -3,18 +3,17 @@ import { ProgressPhoto } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export function ProgressComparison() {
+  const { user } = useAuth();
   const { data: photos } = useQuery<ProgressPhoto[]>({
     queryKey: ["/api/progress/photos"],
+    enabled: !!user, // Only fetch if user is logged in
   });
 
-  // Debug log to check what photos we're getting
-  console.log('Progress photos:', photos);
-
-  // Return null only if we have no photos at all
-  if (!photos || photos.length === 0) {
-    console.log('No photos available');
+  // Don't render anything if user is not logged in or has no photos
+  if (!user || !photos || photos.length === 0) {
     return null;
   }
 
@@ -23,7 +22,6 @@ export function ProgressComparison() {
 
   // Only show if we have different photos
   if (!firstPhoto?.photoUrl || !latestPhoto?.photoUrl || firstPhoto.id === latestPhoto.id) {
-    console.log('Same photo or missing URLs');
     return null;
   }
 
@@ -57,10 +55,15 @@ export function ProgressComparison() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+              {/* Add error handling for image loading */}
               <img
                 src={firstPhoto.photoUrl}
                 alt="Day 1"
                 className="h-full w-full object-cover"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.src = '/placeholder-image.png'; // Add a placeholder image
+                }}
               />
             </div>
             <p className="text-sm text-center text-muted-foreground">Day 1</p>
@@ -71,6 +74,10 @@ export function ProgressComparison() {
                 src={latestPhoto.photoUrl}
                 alt={`Day ${photos.length}`}
                 className="h-full w-full object-cover"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.src = '/placeholder-image.png'; // Add a placeholder image
+                }}
               />
             </div>
             <p className="text-sm text-center text-muted-foreground">
