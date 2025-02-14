@@ -3,6 +3,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChallengeVariantSelector } from "@/components/challenge-variant-selector";
+import { CustomChallengeCreator } from "@/components/custom-challenge-creator";
 import { User, Settings, LogOut } from "lucide-react";
 
 export default function ProfilePage() {
@@ -34,6 +35,10 @@ export default function ProfilePage() {
                   <span>Challenge Type</span>
                 </label>
                 <ChallengeVariantSelector />
+              </div>
+
+              <div className="pt-4 border-t">
+                <CustomChallengeCreator />
               </div>
 
               <Button

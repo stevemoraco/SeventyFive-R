@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   startDate: text("start_date"),
   currentDay: integer("current_day").default(1),
   achievements: json("achievements").default({}).notNull(),
+  customChallenges: json("custom_challenges").default([]).notNull(),
 });
 
 export const dailyTasks = pgTable("daily_tasks", {
@@ -24,6 +25,7 @@ export const dailyTasks = pgTable("daily_tasks", {
   photoTaken: boolean("photo_taken").default(false).notNull(),
   photoUrl: text("photo_url"),
   notes: text("notes"),
+  customTasksComplete: json("custom_tasks_complete").default({}).notNull(),
 });
 
 export const userProgress = pgTable("user_progress", {
@@ -52,3 +54,20 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type DailyTask = typeof dailyTasks.$inferSelect;
 export type UserProgress = typeof userProgress.$inferSelect;
+
+export interface CustomChallenge {
+  id: string;
+  name: string;
+  description: string;
+  workouts: number;
+  outdoorWorkout: boolean;
+  waterAmount: number;
+  readingMinutes: number;
+  requirePhoto: boolean;
+  dietType: 'strict' | 'flexible' | 'none';
+  customTasks: Array<{
+    id: string;
+    name: string;
+    description: string;
+  }>;
+}

@@ -29,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   app.get("/api/tasks/today", async (req, res) => {
-    const userId = req.user?.id || 0; // Use 0 for anonymous users
+    const userId = req.user?.id || 0;
     const tasks = await storage.getDailyTasks(userId, new Date());
     res.json(tasks);
   });
@@ -58,9 +58,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(photos);
   });
 
+  app.post("/api/challenges/custom", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Please sign in to create custom challenges" });
+    }
+
+    const user = await storage.getUser(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const customChallenges = (user.customChallenges as any[]) || [];
+    customChallenges.push(req.body);
+
+    await storage.updateUser(user.id, {
+      customChallenges,
+    });
+
+    res.status(201).json(req.body);
+  });
+
   app.patch("/api/user/challenge", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const user = await storage.updateUser(req.user.id, { challengeType: req.body.challengeType });
+    const user = await storage.updateUser(req.user.id, {
+      challengeType: req.body.challengeType,
+      currentDay: req.body.currentDay || 1,
+    });
     res.json(user);
   });
 
