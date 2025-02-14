@@ -6,7 +6,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Settings, ChevronDown, ChevronUp, Dumbbell, Droplet, Book, Camera } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Settings, ChevronDown, ChevronUp, Dumbbell, Droplet, Book, Camera, Search, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,7 @@ export function ChallengeGallery() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [selectedCustomChallenge, setSelectedCustomChallenge] = useState<CustomChallenge | null>(null);
@@ -80,6 +82,20 @@ export function ChallengeGallery() {
   };
 
   const customChallenges = user?.customChallenges as CustomChallenge[] || [];
+  const challengeStats = user?.challengeStats as Record<string, { currentUsers: number, totalCompletions: number }> || {};
+
+  // Sort challenges by popularity (current users)
+  const sortedCustomChallenges = [...customChallenges].sort((a, b) => {
+    const aStats = a.stats || { currentUsers: 0 };
+    const bStats = b.stats || { currentUsers: 0 };
+    return bStats.currentUsers - aStats.currentUsers;
+  });
+
+  // Filter challenges based on search query
+  const filteredCustomChallenges = sortedCustomChallenges.filter(challenge => 
+    challenge.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    challenge.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <>
@@ -98,6 +114,16 @@ export function ChallengeGallery() {
 
         {isExpanded && (
           <div className="space-y-4 pt-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search challenges..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
             <h3 className="font-medium">Built-in Challenges</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(builtInVariants).map(([value, variant]) => (
@@ -110,6 +136,12 @@ export function ChallengeGallery() {
                 >
                   <h4 className="font-medium">{variant.name}</h4>
                   <p className="text-sm text-gray-500 mt-1">{variant.description}</p>
+                  <div className="flex items-center space-x-2 mt-2 text-sm text-gray-500">
+                    <Users className="h-4 w-4" />
+                    <span>{challengeStats[value]?.currentUsers || 0} users</span>
+                    <span>•</span>
+                    <span>{challengeStats[value]?.totalCompletions || 0} completions</span>
+                  </div>
                   <ul className="mt-2 space-y-1">
                     {variant.features.map((feature, i) => (
                       <li key={i} className="text-sm flex items-center space-x-2">
@@ -122,11 +154,11 @@ export function ChallengeGallery() {
               ))}
             </div>
 
-            {customChallenges.length > 0 && (
+            {filteredCustomChallenges.length > 0 && (
               <>
                 <h3 className="font-medium pt-4">Custom Challenges</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {customChallenges.map((challenge) => (
+                  {filteredCustomChallenges.map((challenge) => (
                     <Card
                       key={challenge.id}
                       className={`p-4 cursor-pointer hover:border-primary transition-colors ${
@@ -138,6 +170,12 @@ export function ChallengeGallery() {
                     >
                       <h4 className="font-medium">{challenge.name}</h4>
                       <p className="text-sm text-gray-500 mt-1">{challenge.description}</p>
+                      <div className="flex items-center space-x-2 mt-2 text-sm text-gray-500">
+                        <Users className="h-4 w-4" />
+                        <span>{challenge.stats?.currentUsers || 0} users</span>
+                        <span>•</span>
+                        <span>{challenge.stats?.totalCompletions || 0} completions</span>
+                      </div>
                       <ul className="mt-2 space-y-1">
                         {getFeaturesList(challenge).map((feature, i) => (
                           <li key={i} className="text-sm flex items-center space-x-2">

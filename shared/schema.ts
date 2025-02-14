@@ -2,6 +2,27 @@ import { pgTable, text, serial, integer, boolean, date, json } from "drizzle-orm
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export interface CustomChallenge {
+  id: string;
+  name: string;
+  description: string;
+  workouts: number;
+  outdoorWorkout: boolean;
+  waterAmount: number;
+  readingMinutes: number;
+  requirePhoto: boolean;
+  dietType: 'strict' | 'flexible' | 'none';
+  customTasks: Array<{
+    id: string;
+    name: string;
+    description: string;
+  }>;
+  stats: {
+    currentUsers: number;
+    totalCompletions: number;
+  };
+}
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -12,6 +33,10 @@ export const users = pgTable("users", {
   achievements: json("achievements").default({}).notNull(),
   customChallenges: json("custom_challenges").default([]).notNull(),
   currentCustomChallengeId: text("current_custom_challenge_id"),
+  challengeStats: json("challenge_stats").default({
+    "75hard": { currentUsers: 0, totalCompletions: 0 },
+    "75soft": { currentUsers: 0, totalCompletions: 0 }
+  }).notNull(),
 });
 
 export const dailyTasks = pgTable("daily_tasks", {
@@ -55,20 +80,3 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type DailyTask = typeof dailyTasks.$inferSelect;
 export type UserProgress = typeof userProgress.$inferSelect;
-
-export interface CustomChallenge {
-  id: string;
-  name: string;
-  description: string;
-  workouts: number;
-  outdoorWorkout: boolean;
-  waterAmount: number;
-  readingMinutes: number;
-  requirePhoto: boolean;
-  dietType: 'strict' | 'flexible' | 'none';
-  customTasks: Array<{
-    id: string;
-    name: string;
-    description: string;
-  }>;
-}

@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
+import { CustomChallenge } from "@shared/types";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -49,11 +50,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const oldUser = await this.getUser(id);
     const [user] = await db.update(users)
       .set(updates)
       .where(eq(users.id, id))
       .returning();
     if (!user) throw new Error("User not found");
+
+    // Update challenge stats when challenge type changes
+    if (updates.challengeType && oldUser?.challengeType !== updates.challengeType) {
+      // Decrease count for old challenge
+      if (oldUser) {
+        const oldStats = oldUser.challengeStats as Record<string, any>;
+        if (oldStats[oldUser.challengeType]) {
+          oldStats[oldUser.challengeType].currentUsers--;
+          await db.update(users)
+            .set({ challengeStats: oldStats })
+            .where(eq(users.id, oldUser.id));
+        }
+      }
+
+      // Increase count for new challenge
+      const stats = user.challengeStats as Record<string, any>;
+      if (updates.challengeType === 'custom') {
+        const customChallenges = user.customChallenges as CustomChallenge[];
+        const challenge = customChallenges.find(c => c.id === updates.currentCustomChallengeId);
+        if (challenge) {
+          challenge.stats = challenge.stats || { currentUsers: 0, totalCompletions: 0 };
+          challenge.stats.currentUsers++;
+          await db.update(users)
+            .set({ customChallenges })
+            .where(eq(users.id, user.id));
+        }
+      } else if (stats[updates.challengeType]) {
+        stats[updates.challengeType].currentUsers++;
+        await db.update(users)
+          .set({ challengeStats: stats })
+          .where(eq(users.id, user.id));
+      }
+    }
+
     return user;
   }
 
@@ -147,6 +183,32 @@ export class DatabaseStorage implements IStorage {
       // Update total photos
       if (tasks.photoTaken && tasks.photoUrl) {
         totalPhotos += 1;
+      }
+
+      //Added code from edited snippet
+      if (streakDays === 75) {
+        const user = await this.getUser(userId);
+        if (user) {
+          const stats = user.challengeStats as Record<string, any>;
+          if (user.challengeType === 'custom') {
+            const customChallenges = user.customChallenges as CustomChallenge[];
+            const challenge = customChallenges.find(c => c.id === user.currentCustomChallengeId);
+            if (challenge) {
+              challenge.stats = challenge.stats || { currentUsers: 0, totalCompletions: 0 };
+              challenge.stats.currentUsers--;
+              challenge.stats.totalCompletions++;
+              await db.update(users)
+                .set({ customChallenges })
+                .where(eq(users.id, user.id));
+            }
+          } else if (stats[user.challengeType]) {
+            stats[user.challengeType].currentUsers--;
+            stats[user.challengeType].totalCompletions++;
+            await db.update(users)
+              .set({ challengeStats: stats })
+              .where(eq(users.id, user.id));
+          }
+        }
       }
     }
 
