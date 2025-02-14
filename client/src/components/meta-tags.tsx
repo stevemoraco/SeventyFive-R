@@ -15,14 +15,16 @@ export function MetaTags({
   type = "website"
 }: MetaTagsProps) {
   const [location] = useLocation();
-  const baseUrl = "https://seventyfive.app"; // Replace with your actual domain
+  const baseUrl = import.meta.env.VITE_APP_URL || "https://seventyfive.app";
 
   useEffect(() => {
     // Update title
     document.title = title;
 
     // Ensure image URL is absolute
-    const absoluteImageUrl = image.startsWith('http') ? image : `${baseUrl}${image}`;
+    const absoluteImageUrl = image.startsWith('http') 
+      ? image 
+      : `${baseUrl}${image}`;
 
     // Define all meta tags to be updated/created
     const metaTags = {
