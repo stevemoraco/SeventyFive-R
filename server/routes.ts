@@ -114,6 +114,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded files
   app.use("/uploads", express.static(uploadsDir));
 
+  // Add this route to handle reminder settings updates
+  app.patch("/api/user", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const updateData: Partial<User> = {};
+    if (req.body.reminderSettings) {
+      updateData.reminderSettings = req.body.reminderSettings;
+    }
+    if (req.body.challengeType) {
+      updateData.challengeType = req.body.challengeType;
+      updateData.currentDay = req.body.currentDay || 1;
+      if (req.body.challengeType === "custom" && req.body.customChallengeId) {
+        updateData.currentCustomChallengeId = req.body.customChallengeId;
+      } else {
+        updateData.currentCustomChallengeId = null;
+      }
+    }
+
+    const user = await storage.updateUser(req.user.id, updateData);
+    res.json(user);
+  });
+
+
   const httpServer = createServer(app);
   return httpServer;
 }

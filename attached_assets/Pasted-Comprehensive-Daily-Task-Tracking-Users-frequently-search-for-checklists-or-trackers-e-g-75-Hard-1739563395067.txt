@@ -1,0 +1,34 @@
+Comprehensive Daily Task Tracking: Users frequently search for checklists or trackers (e.g. “75 Hard challenge checklist” is a common query). An app should provide an easy-to-use daily checklist of all 75 Hard tasks (workouts, water intake, reading, etc.) that users can tick off. The official 75 HARD app already allows tracking of daily tasks with one click​
+ANDYFRISELLA.COM
+, so any new app must match this basic functionality.
+Reminders to Prevent Failure: Forgetting a task is a big fear (since the challenge restarts if you slip up). Queries like “75 Hard app” show interest in a solution to stay on track, and the official app’s popularity is partly due to its reminder feature​
+ANDYFRISELLA.COM
+. Your app should let users set customizable reminders for each task (e.g. a nightly reminder to take the progress photo) so they “never forget anything and be forced to start over”​
+ANDYFRISELLA.COM
+.
+Progress Photos and Sharing: Taking a daily progress photo is one of the challenge requirements, and people want a convenient way to handle this. The official app lets users save progress pics in the app and share updates to Instagram​
+ANDYFRISELLA.COM
+. User interest in “progress” is high (many search for “75 Hard progress” or share on social media). Including a photo gallery feature with easy social sharing will meet this demand and leverage the social media buzz around 75 Hard.
+Summary of Overall Progress: Some users search for ways to get insights into their 75 Hard journey beyond daily tracking. For example, one Reddit user asked if any app can summarize your efforts at the end – e.g. total pages read, total workout minutes, weight lost​
+REDDIT.COM
+. This suggests a valuable feature: the app could include progress statistics or a summary report once the 75 days are completed (or as the user progresses), giving a sense of accomplishment (e.g. “You read 750 pages and drank 75 gallons of water in 75 days!”).
+Community & Accountability Features: Related searches indicate people often look for support or compare apps. Phrases like “best 75 Hard tracker app”​
+TIKTOK.COM
+and “75 Hard group chats”​
+TIKTOK.COM
+show that users are discussing which app to use and how to stay accountable together. Consider adding a community aspect: for example, the ability to add friends or join groups to share progress, or an accountability buddy system. Even a simple feature to notify a friend when you’ve completed daily tasks (as seen in other habit apps) can tap into this desire for social support​
+REDDIT.COM
+.
+Customization for Similar Challenges: The 75 Soft challenge – a gentler variant – has been trending alongside 75 Hard (TikTok hashtags for #75softchallenge garnered over 93 million views, with search interest surging more than 124% in 2022​
+ISSUU.COM
+). Users have even asked for a “75 Medium/Soft” mode in apps​
+REDDIT.COM
+. A smart opportunity is to allow customizable rules or modes in your app. By supporting 75 Hard as well as a 75 Soft (or user-defined) challenge, you can attract a broader audience. For instance, let users modify the number of days or tasks – those not ready for the full 75 Hard might still download your app for a scaled-down challenge.
+User Experience and Reliability: Many are searching for the “best” app alternative, which implies some dissatisfaction with existing options. Reviews on Reddit mention the official app’s limited functionality and occasional bugs​
+REDDIT.COM
+​
+REDDIT.COM
+. Ensuring a smooth, responsive interface (no laggy checkboxes) and maybe offering free or cheaper access (since the official app costs a few dollars) can give your app a competitive edge. Users appreciate when an app simply works and makes the challenge easier, as indicated by comments about using basic habit trackers or even spreadsheets as alternatives​
+REDDIT.COM
+.
+Additional Guidance and Content: Given the huge interest in “75 Hard” and related queries, many people are also searching for rules, tips, diet plans, and inspiration (e.g., “75 Hard tips,” “75 Hard diet”). While not directly about an app, this trend suggests users crave information. Incorporating some educational content or resources in the app (such as a tips section, or linking to FAQs about the rules) can improve user satisfaction and engagement. It helps make the app a one-stop solution for both tracking and learning about the challenge.

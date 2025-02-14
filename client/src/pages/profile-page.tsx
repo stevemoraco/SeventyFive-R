@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChallengeGallery } from "@/components/challenge-gallery";
 import { CustomChallengeCreator } from "@/components/custom-challenge-creator";
+import { ReminderSettingsCard } from "@/components/reminder-settings";
 import { User, LogOut } from "lucide-react";
 
 export default function ProfilePage() {
@@ -29,7 +30,11 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-6">
-              <ChallengeGallery />
+              <ReminderSettingsCard />
+
+              <div className="border-t pt-6">
+                <ChallengeGallery />
+              </div>
 
               <div className="pt-4 border-t">
                 <CustomChallengeCreator />

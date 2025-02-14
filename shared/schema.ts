@@ -23,6 +23,12 @@ export interface CustomChallenge {
   };
 }
 
+export interface ReminderSettings {
+  enabled: boolean;
+  time: string; // 24h format HH:mm
+  tasks: string[]; // Array of task IDs to remind about
+}
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -36,6 +42,11 @@ export const users = pgTable("users", {
   challengeStats: json("challenge_stats").default({
     "75hard": { currentUsers: 0, totalCompletions: 0 },
     "75soft": { currentUsers: 0, totalCompletions: 0 }
+  }).notNull(),
+  reminderSettings: json("reminder_settings").default({
+    enabled: false,
+    time: "20:00", // Default reminder at 8 PM
+    tasks: []
   }).notNull(),
 });
 
