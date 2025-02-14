@@ -14,7 +14,17 @@ export function PhotoUpload() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("photo", file);
-      const res = await apiRequest("POST", "/api/tasks/today/photo", formData);
+      const res = await fetch("/api/tasks/today/photo", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to upload photo");
+      }
+
       return res.json();
     },
     onSuccess: () => {

@@ -7,9 +7,16 @@ import multer from "multer";
 import { randomBytes } from "crypto";
 import path from "path";
 import express from "express";
+import fs from "fs";
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 const storageMulter = multer.diskStorage({
-  destination: "uploads/",
+  destination: uploadsDir,
   filename: (_req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${randomBytes(6).toString("hex")}`;
     cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
@@ -59,7 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tasks/today/photo", upload.single("photo"), async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Please sign in to upload photos" });
-    if (!req.file) return res.status(400).send("No file uploaded");
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
     const photoUrl = `/uploads/${req.file.filename}`;
     const tasks = await storage.updateDailyTasks(req.user.id, new Date(), {
@@ -70,7 +77,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(tasks);
   });
 
-  app.use("/uploads", express.static("uploads"));
+  // Serve uploaded files
+  app.use("/uploads", express.static(uploadsDir));
 
   const httpServer = createServer(app);
   return httpServer;
