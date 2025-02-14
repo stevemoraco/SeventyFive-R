@@ -48,7 +48,7 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
-      startDate: new Date(),
+      startDate: new Date().toISOString(),
       currentDay: 1
     };
     this.users.set(id, user);
@@ -58,7 +58,7 @@ export class MemStorage implements IStorage {
   async updateUser(id: number, updates: Partial<User>): Promise<User> {
     const user = await this.getUser(id);
     if (!user) throw new Error("User not found");
-    
+
     const updatedUser = { ...user, ...updates };
     this.users.set(id, updatedUser);
     return updatedUser;
@@ -67,22 +67,24 @@ export class MemStorage implements IStorage {
   async getDailyTasks(userId: number, date: Date): Promise<DailyTask> {
     const key = `${userId}-${date.toISOString().split('T')[0]}`;
     let tasks = this.tasks.get(key);
-    
+
     if (!tasks) {
       tasks = {
         id: this.currentId++,
         userId,
-        date,
+        date: date.toISOString().split('T')[0],
         workout1Complete: false,
         workout2Complete: false,
         waterComplete: false,
         readingComplete: false,
         dietComplete: false,
         photoTaken: false,
+        photoUrl: null,
+        notes: null
       };
       this.tasks.set(key, tasks);
     }
-    
+
     return tasks;
   }
 
@@ -110,10 +112,9 @@ export class MemStorage implements IStorage {
     }
 
     // Update progress based on completed tasks
-    if (tasks.workout1Complete) progress.totalWorkouts++;
-    if (tasks.workout2Complete) progress.totalWorkouts++;
-    if (tasks.waterComplete) progress.totalWaterGallons++;
-    if (tasks.readingComplete) progress.totalReadingMinutes += 10;
+    progress.totalWorkouts += (tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0);
+    progress.totalWaterGallons += tasks.waterComplete ? 1 : 0;
+    progress.totalReadingMinutes += tasks.readingComplete ? 10 : 0;
 
     this.progress.set(userId, progress);
   }
@@ -138,7 +139,11 @@ export class MemStorage implements IStorage {
   async getUserPhotos(userId: number): Promise<DailyTask[]> {
     return Array.from(this.tasks.values())
       .filter(task => task.userId === userId && task.photoTaken && task.photoUrl)
-      .sort((a, b) => b.date.getTime() - a.date.getTime());
+      .sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA;
+      });
   }
 }
 
