@@ -28,6 +28,9 @@ const upload = multer({ storage: storageMulter });
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
+  // Serve static files from client/public directory
+  app.use(express.static(path.join(process.cwd(), "client", "public")));
+
   app.get("/api/tasks/today", async (req, res) => {
     const userId = req.user?.id || 0;
     const tasks = await storage.getDailyTasks(userId, new Date());
@@ -127,10 +130,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  // Serve uploaded files
-  app.use("/uploads", express.static(uploadsDir));
-
-  // Add this route to handle reminder settings updates
   app.patch("/api/user", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -152,7 +151,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(user);
   });
 
-  // Add theme update route
   app.patch("/api/theme", (req, res) => {
     const themeFile = path.join(process.cwd(), "theme.json");
     const theme = JSON.parse(fs.readFileSync(themeFile, "utf8"));
