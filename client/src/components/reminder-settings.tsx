@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Trash2, Bell, BellOff, Clock, AlertTriangle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import cn from 'classnames';
 
 const AVAILABLE_TASKS = [
   { id: "workout1", label: "First Workout" },
@@ -218,7 +219,11 @@ export function ReminderSettingsCard() {
     updateSettingsMutation.mutate(updatedSettings);
   };
 
-  const disabledControls = !user;
+  const handleControlClick = () => {
+    if (!user) {
+      setShowLoginAlert(true);
+    }
+  };
 
   return (
     <>
@@ -249,38 +254,34 @@ export function ReminderSettingsCard() {
                           type="time"
                           value={reminder.time}
                           onChange={(e) => handleTimeChange(task.id, e.target.value)}
-                          className="w-28 sm:w-32 h-9"
-                          disabled={disabledControls || !reminder.enabled}
+                          className={cn(
+                            "w-28 sm:w-32 h-9",
+                            !user && "opacity-50 cursor-not-allowed"
+                          )}
+                          onClick={handleControlClick}
+                          readOnly={!user}
                         />
                         <div className="flex items-center space-x-2">
                           <Switch
                             checked={reminder.enabled}
                             onCheckedChange={(checked) => handleToggleReminder(task.id, checked)}
-                            disabled={disabledControls}
+                            className={cn(!user && "opacity-50 cursor-not-allowed")}
+                            onClick={handleControlClick}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setExpandedTask(isExpanded ? null : task.id)}
-                            className="hidden sm:inline-flex"
-                            disabled={disabledControls}
+                            onClick={() => user ? setExpandedTask(isExpanded ? null : task.id) : handleControlClick()}
+                            className={cn(
+                              "hidden sm:inline-flex",
+                              !user && "opacity-50 cursor-not-allowed"
+                            )}
                           >
                             {isExpanded ? "Hide" : "More"}
                           </Button>
                         </div>
                       </div>
                     </div>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setExpandedTask(isExpanded ? null : task.id)}
-                      className="w-full sm:hidden text-sm py-1"
-                      disabled={disabledControls}
-                    >
-                      {isExpanded ? "Hide Additional Reminders" : "Show Additional Reminders"}
-                    </Button>
-
                     {isExpanded && (
                       <div className="pl-4 sm:pl-6 space-y-3">
                         <div className="flex items-center justify-between text-sm text-gray-500">
@@ -289,7 +290,10 @@ export function ReminderSettingsCard() {
                             variant="outline"
                             size="sm"
                             onClick={() => addAdditionalReminder(task.id)}
-                            disabled={disabledControls || !reminder.enabled}
+                            className={cn(
+                              "",
+                              !user && "opacity-50 cursor-not-allowed"
+                            )}
                           >
                             <Plus className="h-4 w-4 mr-2" />
                             Add
@@ -303,8 +307,12 @@ export function ReminderSettingsCard() {
                               type="time"
                               value={additionalReminder.time}
                               onChange={(e) => handleTimeChange(task.id, e.target.value, index)}
-                              className="w-28 sm:w-32 h-9"
-                              disabled={disabledControls || !reminder.enabled || !additionalReminder.enabled}
+                              className={cn(
+                                "w-28 sm:w-32 h-9",
+                                !user && "opacity-50 cursor-not-allowed"
+                              )}
+                              onClick={handleControlClick}
+                              readOnly={!user}
                             />
                             <div className="flex items-center space-x-2">
                               <Switch
@@ -312,13 +320,17 @@ export function ReminderSettingsCard() {
                                 onCheckedChange={(checked) =>
                                   toggleAdditionalReminder(task.id, index, checked)
                                 }
-                                disabled={disabledControls || !reminder.enabled}
+                                className={cn(!user && "opacity-50 cursor-not-allowed")}
+                                onClick={handleControlClick}
                               />
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeAdditionalReminder(task.id, index)}
-                                disabled={disabledControls}
+                                className={cn(
+                                  "",
+                                  !user && "opacity-50 cursor-not-allowed"
+                                )}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -348,7 +360,8 @@ export function ReminderSettingsCard() {
                   <Switch
                     checked={reminderSettings.panicMode.enabled}
                     onCheckedChange={handleTogglePanicMode}
-                    disabled={disabledControls}
+                    className={cn(!user && "opacity-50 cursor-not-allowed")}
+                    onClick={handleControlClick}
                   />
                 </div>
 
@@ -359,8 +372,12 @@ export function ReminderSettingsCard() {
                       type="time"
                       value={reminderSettings.panicMode.time}
                       onChange={(e) => handlePanicTimeChange(e.target.value)}
-                      className="mt-1 h-9"
-                      disabled={disabledControls || !reminderSettings.panicMode.enabled}
+                      className={cn(
+                        "mt-1 h-9",
+                        !user && "opacity-50 cursor-not-allowed"
+                      )}
+                      onClick={handleControlClick}
+                      readOnly={!user}
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       When to check for incomplete tasks
@@ -375,8 +392,12 @@ export function ReminderSettingsCard() {
                       max="120"
                       value={reminderSettings.panicMode.intervalMinutes}
                       onChange={(e) => handlePanicIntervalChange(parseInt(e.target.value))}
-                      className="mt-1 h-9"
-                      disabled={disabledControls || !reminderSettings.panicMode.enabled}
+                      className={cn(
+                        "mt-1 h-9",
+                        !user && "opacity-50 cursor-not-allowed"
+                      )}
+                      onClick={handleControlClick}
+                      readOnly={!user}
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       Minutes between reminders (5-120)

@@ -157,9 +157,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     if (req.body.appearance) {
       theme.appearance = req.body.appearance;
-      fs.writeFileSync(themeFile, JSON.stringify(theme, null, 2));
+    }
+    if (req.body.primary) {
+      theme.primary = req.body.primary;
     }
 
+    fs.writeFileSync(themeFile, JSON.stringify(theme, null, 2));
     res.json(theme);
   });
 
