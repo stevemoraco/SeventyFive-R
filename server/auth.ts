@@ -127,12 +127,20 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
-      if (err) return next(err);
+      if (err) {
+        log(`[auth] Login error: ${err}`);
+        return next(err);
+      }
       if (!user) {
+        log(`[auth] Authentication failed: ${info?.message}`);
         return res.status(401).json({ message: info?.message || "Authentication failed" });
       }
-      req.login(user, (err) => {
-        if (err) return next(err);
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          log(`[auth] Login error after authentication: ${loginErr}`);
+          return next(loginErr);
+        }
+        log(`[auth] Login successful for user: ${user.username}`);
         res.json(user);
       });
     })(req, res, next);
