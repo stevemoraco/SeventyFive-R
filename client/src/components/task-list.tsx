@@ -10,11 +10,14 @@ import { PhotoUpload } from "./photo-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export function TaskList() {
   const [progress, setProgress] = useState(0);
   const [notes, setNotes] = useState("");
   const { toast } = useToast();
+  const { user } = useAuth();
+  const is75Soft = user?.challengeType === "75soft";
 
   const { data: tasks } = useQuery<DailyTask>({
     queryKey: ["/api/tasks/today"],
@@ -23,18 +26,24 @@ export function TaskList() {
   useEffect(() => {
     if (tasks) {
       setNotes(tasks.notes || "");
-      const completedTasks = [
+      const requiredTasks = is75Soft ? [
+        tasks.workout1Complete,
+        tasks.waterComplete,
+        tasks.readingComplete,
+        tasks.dietComplete,
+      ] : [
         tasks.workout1Complete,
         tasks.workout2Complete,
         tasks.waterComplete,
         tasks.readingComplete,
         tasks.dietComplete,
         tasks.photoTaken,
-      ].filter(Boolean).length;
+      ];
 
-      setProgress((completedTasks / 6) * 100);
+      const completedTasks = requiredTasks.filter(Boolean).length;
+      setProgress((completedTasks / requiredTasks.length) * 100);
     }
-  }, [tasks]);
+  }, [tasks, is75Soft]);
 
   const updateTaskMutation = useMutation({
     mutationFn: async (taskUpdate: Partial<DailyTask>) => {
@@ -66,17 +75,19 @@ export function TaskList() {
         <div className="space-y-4">
           <TaskItem
             icon={<Dumbbell className="h-5 w-5" />}
-            label="First Workout"
+            label={is75Soft ? "45 Min Workout" : "First Workout"}
             checked={tasks?.workout1Complete}
             onChange={(checked) => handleTaskToggle("workout1Complete", checked)}
           />
 
-          <TaskItem
-            icon={<Dumbbell className="h-5 w-5" />}
-            label="Second Workout"
-            checked={tasks?.workout2Complete}
-            onChange={(checked) => handleTaskToggle("workout2Complete", checked)}
-          />
+          {!is75Soft && (
+            <TaskItem
+              icon={<Dumbbell className="h-5 w-5" />}
+              label="Second Workout (Outdoor)"
+              checked={tasks?.workout2Complete}
+              onChange={(checked) => handleTaskToggle("workout2Complete", checked)}
+            />
+          )}
 
           <TaskItem
             icon={<Droplet className="h-5 w-5" />}
@@ -94,24 +105,26 @@ export function TaskList() {
 
           <TaskItem
             icon={<Apple className="h-5 w-5" />}
-            label="Follow Diet"
+            label={is75Soft ? "Follow Diet Plan" : "Follow Strict Diet"}
             checked={tasks?.dietComplete}
             onChange={(checked) => handleTaskToggle("dietComplete", checked)}
           />
 
-          <div className="space-y-2">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
-                <Camera className="h-5 w-5" />
+          {!is75Soft && (
+            <div className="space-y-2">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
+                  <Camera className="h-5 w-5" />
+                </div>
+                <div className="flex-1">Progress Photo</div>
+                <Checkbox
+                  checked={tasks?.photoTaken}
+                  onCheckedChange={(checked) => handleTaskToggle("photoTaken", checked as boolean)}
+                />
               </div>
-              <div className="flex-1">Progress Photo</div>
-              <Checkbox
-                checked={tasks?.photoTaken}
-                onCheckedChange={(checked) => handleTaskToggle("photoTaken", checked as boolean)}
-              />
+              <PhotoUpload />
             </div>
-            <PhotoUpload />
-          </div>
+          )}
 
           <div className="space-y-2 pt-4 border-t">
             <div className="flex items-center justify-between">
