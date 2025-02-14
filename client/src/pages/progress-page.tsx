@@ -21,6 +21,7 @@ export default function ProgressPage() {
       <PageHeader title="Progress" />
 
       <div className="p-4 space-y-6">
+        {/* Force the component to render for debugging */}
         <ProgressComparison />
 
         <div className="grid grid-cols-2 gap-4">

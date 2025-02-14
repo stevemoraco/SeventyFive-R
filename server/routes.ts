@@ -53,8 +53,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/progress/photos", async (req, res) => {
-    if (!req.user) return res.json([]);
+    console.log("Fetching photos for user:", req.user?.id);
+    if (!req.user) {
+      console.log("No authenticated user");
+      return res.json([]);
+    }
     const photos = await storage.getUserPhotos(req.user.id);
+    console.log("Found photos:", photos.length);
     res.json(photos);
   });
 

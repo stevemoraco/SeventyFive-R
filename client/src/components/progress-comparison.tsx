@@ -9,13 +9,21 @@ export function ProgressComparison() {
     queryKey: ["/api/progress/photos"],
   });
 
-  if (!photos?.length) return null;
+  // Debug log to check what photos we're getting
+  console.log('Progress photos:', photos);
+
+  // Return null only if we have no photos at all
+  if (!photos || photos.length === 0) {
+    console.log('No photos available');
+    return null;
+  }
 
   const firstPhoto = photos[0];
   const latestPhoto = photos[photos.length - 1];
-  
-  // Only show if we have both photos and they're different
+
+  // Only hide if they're the exact same photo
   if (!firstPhoto?.photoUrl || !latestPhoto?.photoUrl || firstPhoto.id === latestPhoto.id) {
+    console.log('Same photo or missing URLs');
     return null;
   }
 
