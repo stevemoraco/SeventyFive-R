@@ -13,6 +13,11 @@ export interface TaskReminder {
 
 export interface ReminderSettings {
   taskReminders: Record<string, TaskReminder>;
+  panicMode: {
+    enabled: boolean;
+    time: string; // When to check for incomplete tasks
+    intervalMinutes: number; // How often to send reminders for incomplete tasks
+  };
 }
 
 export interface CustomChallenge {
@@ -58,6 +63,11 @@ export const users = pgTable("users", {
       reading: { time: "20:00", enabled: false, additionalReminders: [] },
       diet: { time: "07:00", enabled: false, additionalReminders: [] },
       photo: { time: "21:00", enabled: false, additionalReminders: [] }
+    },
+    panicMode: {
+      enabled: false,
+      time: "21:00",
+      intervalMinutes: 30
     }
   }).notNull(),
 });
