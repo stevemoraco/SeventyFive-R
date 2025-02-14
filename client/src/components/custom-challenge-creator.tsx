@@ -105,6 +105,10 @@ export function CustomChallengeCreator() {
     createChallengeMutation.mutate({
       id: nanoid(),
       ...data,
+      stats: {
+        currentUsers: 0,
+        totalCompletions: 0
+      }
     });
   };
 
