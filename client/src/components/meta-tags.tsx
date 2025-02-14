@@ -11,7 +11,7 @@ interface MetaTagsProps {
 export function MetaTags({
   title = "SeventyFive - 75 Hard Challenge Tracker",
   description = "Transform your life with the 75 Hard Challenge. Track workouts, reading, water intake, and more with our comprehensive progress tracker.",
-  image = "/icon.webp",
+  image = "/preview.jpg",
   type = "website"
 }: MetaTagsProps) {
   const [location] = useLocation();
