@@ -99,13 +99,51 @@ export class DatabaseStorage implements IStorage {
   private async updateProgress(userId: number, tasks: DailyTask) {
     const [progress] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
 
+    // Calculate streak
+    const dateStr = tasks.date;
+    const [previousDayTasks] = await db.select()
+      .from(dailyTasks)
+      .where(eq(dailyTasks.userId, userId))
+      .where(eq(dailyTasks.date, new Date(new Date(dateStr).getTime() - 86400000).toISOString().split('T')[0]));
+
+    let streakDays = 0;
+    if (progress) {
+      streakDays = progress.streakDays;
+
+      // Check if all tasks are complete for today
+      const isTodayComplete = tasks.workout1Complete && 
+                            tasks.workout2Complete && 
+                            tasks.waterComplete && 
+                            tasks.readingComplete && 
+                            tasks.dietComplete && 
+                            tasks.photoTaken;
+
+      // Check if yesterday was complete (if it exists)
+      const wasYesterdayComplete = previousDayTasks && 
+                                  previousDayTasks.workout1Complete && 
+                                  previousDayTasks.workout2Complete && 
+                                  previousDayTasks.waterComplete && 
+                                  previousDayTasks.readingComplete && 
+                                  previousDayTasks.dietComplete && 
+                                  previousDayTasks.photoTaken;
+
+      // Update streak
+      if (isTodayComplete) {
+        if (wasYesterdayComplete || !previousDayTasks) {
+          streakDays += 1;
+        }
+      } else if (wasYesterdayComplete) {
+        streakDays = 0; // Break streak if today is incomplete but yesterday was complete
+      }
+    }
+
     if (!progress) {
       await db.insert(userProgress).values({
         userId,
         totalWorkouts: (tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0),
         totalWaterGallons: tasks.waterComplete ? 1 : 0,
         totalReadingMinutes: tasks.readingComplete ? 10 : 0,
-        streakDays: 0,
+        streakDays: streakDays,
         stats: {},
       });
     } else {
@@ -114,6 +152,7 @@ export class DatabaseStorage implements IStorage {
           totalWorkouts: progress.totalWorkouts + ((tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0)),
           totalWaterGallons: progress.totalWaterGallons + (tasks.waterComplete ? 1 : 0),
           totalReadingMinutes: progress.totalReadingMinutes + (tasks.readingComplete ? 10 : 0),
+          streakDays: streakDays,
         })
         .where(eq(userProgress.id, progress.id));
     }

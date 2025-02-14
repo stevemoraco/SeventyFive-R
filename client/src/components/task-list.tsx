@@ -4,29 +4,25 @@ import { DailyTask } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Camera, Dumbbell, Droplet, Book, Apple } from "lucide-react";
+import { Camera, Dumbbell, Droplet, Book, Apple, PenLine } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { PhotoUpload } from "./photo-upload";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function TaskList() {
   const [progress, setProgress] = useState(0);
+  const [notes, setNotes] = useState("");
+  const { toast } = useToast();
 
   const { data: tasks } = useQuery<DailyTask>({
     queryKey: ["/api/tasks/today"],
   });
 
-  const updateTaskMutation = useMutation({
-    mutationFn: async (taskUpdate: Partial<DailyTask>) => {
-      const res = await apiRequest("PATCH", "/api/tasks/today", taskUpdate);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks/today"] });
-    },
-  });
-
   useEffect(() => {
     if (tasks) {
+      setNotes(tasks.notes || "");
       const completedTasks = [
         tasks.workout1Complete,
         tasks.workout2Complete,
@@ -40,8 +36,26 @@ export function TaskList() {
     }
   }, [tasks]);
 
+  const updateTaskMutation = useMutation({
+    mutationFn: async (taskUpdate: Partial<DailyTask>) => {
+      const res = await apiRequest("PATCH", "/api/tasks/today", taskUpdate);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks/today"] });
+    },
+  });
+
   const handleTaskToggle = (task: keyof DailyTask, checked: boolean) => {
     updateTaskMutation.mutate({ [task]: checked });
+  };
+
+  const handleSaveNotes = () => {
+    updateTaskMutation.mutate({ notes });
+    toast({
+      title: "Notes saved",
+      description: "Your notes for today have been saved.",
+    });
   };
 
   return (
@@ -97,6 +111,22 @@ export function TaskList() {
               />
             </div>
             <PhotoUpload />
+          </div>
+
+          <div className="space-y-2 pt-4 border-t">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <PenLine className="h-5 w-5 text-gray-500" />
+                <span className="text-sm font-medium">Daily Notes</span>
+              </div>
+              <Button size="sm" onClick={handleSaveNotes}>Save Notes</Button>
+            </div>
+            <Textarea
+              placeholder="Add notes about your workouts, diet, or general progress..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="min-h-[100px]"
+            />
           </div>
         </div>
       </Card>
