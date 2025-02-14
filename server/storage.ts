@@ -18,6 +18,8 @@ export interface IStorage {
   getUserPhotos(userId: number): Promise<DailyTask[]>;
   addProgressPhoto(userId: number, date: string, photoUrl: string, notes?: string): Promise<ProgressPhoto>;
   getProgressPhotos(userId: number): Promise<ProgressPhoto[]>;
+  getAllCustomChallenges(): Promise<CustomChallenge[]>;
+  getChallengeStats(): Promise<Record<string, { currentUsers: number, totalCompletions: number }>>;
   sessionStore: session.Store;
 }
 
@@ -367,6 +369,48 @@ export class DatabaseStorage implements IStorage {
       .from(progressPhotos)
       .where(eq(progressPhotos.userId, userId))
       .orderBy(desc(progressPhotos.timestamp));
+  }
+
+  async getAllCustomChallenges(): Promise<CustomChallenge[]> {
+    // Fetch all users to collect their custom challenges
+    const allUsers = await db.select().from(users);
+    const allChallenges: CustomChallenge[] = [];
+
+    // Collect unique custom challenges from all users
+    allUsers.forEach(user => {
+      const userChallenges = user.customChallenges as CustomChallenge[];
+      if (Array.isArray(userChallenges)) {
+        userChallenges.forEach(challenge => {
+          if (!allChallenges.some(c => c.id === challenge.id)) {
+            allChallenges.push(challenge);
+          }
+        });
+      }
+    });
+
+    return allChallenges;
+  }
+
+  async getChallengeStats(): Promise<Record<string, { currentUsers: number, totalCompletions: number }>> {
+    // Fetch all users to collect challenge statistics
+    const allUsers = await db.select().from(users);
+    const stats: Record<string, { currentUsers: number, totalCompletions: number }> = {};
+
+    // Aggregate stats from all users
+    allUsers.forEach(user => {
+      const userStats = user.challengeStats as Record<string, { currentUsers: number, totalCompletions: number }>;
+      if (userStats) {
+        Object.entries(userStats).forEach(([challengeType, typeStat]) => {
+          if (!stats[challengeType]) {
+            stats[challengeType] = { currentUsers: 0, totalCompletions: 0 };
+          }
+          stats[challengeType].currentUsers = typeStat.currentUsers || 0;
+          stats[challengeType].totalCompletions = typeStat.totalCompletions || 0;
+        });
+      }
+    });
+
+    return stats;
   }
 }
 
