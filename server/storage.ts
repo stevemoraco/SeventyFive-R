@@ -1,8 +1,11 @@
 import { users, dailyTasks, userProgress, type User, type InsertUser, type DailyTask, type UserProgress } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -16,63 +19,55 @@ export interface IStorage {
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private tasks: Map<string, DailyTask>;
-  private progress: Map<number, UserProgress>;
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
-  currentId: number;
 
   constructor() {
-    this.users = new Map();
-    this.tasks = new Map();
-    this.progress = new Map();
-    this.currentId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { 
-      ...insertUser, 
-      id,
+    const [user] = await db.insert(users).values({
+      ...insertUser,
       startDate: new Date().toISOString(),
-      currentDay: 1
-    };
-    this.users.set(id, user);
+      currentDay: 1,
+    }).returning();
     return user;
   }
 
   async updateUser(id: number, updates: Partial<User>): Promise<User> {
-    const user = await this.getUser(id);
+    const [user] = await db.update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
     if (!user) throw new Error("User not found");
-
-    const updatedUser = { ...user, ...updates };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    return user;
   }
 
   async getDailyTasks(userId: number, date: Date): Promise<DailyTask> {
-    const key = `${userId}-${date.toISOString().split('T')[0]}`;
-    let tasks = this.tasks.get(key);
+    const dateStr = date.toISOString().split('T')[0];
+    const [tasks] = await db.select()
+      .from(dailyTasks)
+      .where(eq(dailyTasks.userId, userId))
+      .where(eq(dailyTasks.date, dateStr));
 
     if (!tasks) {
-      tasks = {
-        id: this.currentId++,
+      const [newTasks] = await db.insert(dailyTasks).values({
         userId,
-        date: date.toISOString().split('T')[0],
+        date: dateStr,
         workout1Complete: false,
         workout2Complete: false,
         waterComplete: false,
@@ -80,71 +75,74 @@ export class MemStorage implements IStorage {
         dietComplete: false,
         photoTaken: false,
         photoUrl: null,
-        notes: null
-      };
-      this.tasks.set(key, tasks);
+        notes: null,
+      }).returning();
+      return newTasks;
     }
 
     return tasks;
   }
 
   async updateDailyTasks(userId: number, date: Date, updates: Partial<DailyTask>): Promise<DailyTask> {
-    const key = `${userId}-${date.toISOString().split('T')[0]}`;
-    const existing = await this.getDailyTasks(userId, date);
-    const updated = { ...existing, ...updates };
-    this.tasks.set(key, updated);
-    await this.updateProgress(userId, updated);
-    return updated;
+    const dateStr = date.toISOString().split('T')[0];
+    let tasks = await this.getDailyTasks(userId, date);
+
+    const [updatedTasks] = await db.update(dailyTasks)
+      .set(updates)
+      .where(eq(dailyTasks.id, tasks.id))
+      .returning();
+
+    await this.updateProgress(userId, updatedTasks);
+    return updatedTasks;
   }
 
   private async updateProgress(userId: number, tasks: DailyTask) {
-    let progress = this.progress.get(userId);
+    const [progress] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
+
     if (!progress) {
-      progress = {
-        id: this.currentId++,
+      await db.insert(userProgress).values({
         userId,
-        totalWorkouts: 0,
-        totalWaterGallons: 0,
-        totalReadingMinutes: 0,
+        totalWorkouts: (tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0),
+        totalWaterGallons: tasks.waterComplete ? 1 : 0,
+        totalReadingMinutes: tasks.readingComplete ? 10 : 0,
         streakDays: 0,
         stats: {},
-      };
+      });
+    } else {
+      await db.update(userProgress)
+        .set({
+          totalWorkouts: progress.totalWorkouts + ((tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0)),
+          totalWaterGallons: progress.totalWaterGallons + (tasks.waterComplete ? 1 : 0),
+          totalReadingMinutes: progress.totalReadingMinutes + (tasks.readingComplete ? 10 : 0),
+        })
+        .where(eq(userProgress.id, progress.id));
     }
-
-    // Update progress based on completed tasks
-    progress.totalWorkouts += (tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0);
-    progress.totalWaterGallons += tasks.waterComplete ? 1 : 0;
-    progress.totalReadingMinutes += tasks.readingComplete ? 10 : 0;
-
-    this.progress.set(userId, progress);
   }
 
   async getUserProgress(userId: number): Promise<UserProgress> {
-    let progress = this.progress.get(userId);
+    const [progress] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
+
     if (!progress) {
-      progress = {
-        id: this.currentId++,
+      const [newProgress] = await db.insert(userProgress).values({
         userId,
         totalWorkouts: 0,
         totalWaterGallons: 0,
         totalReadingMinutes: 0,
         streakDays: 0,
         stats: {},
-      };
-      this.progress.set(userId, progress);
+      }).returning();
+      return newProgress;
     }
+
     return progress;
   }
 
   async getUserPhotos(userId: number): Promise<DailyTask[]> {
-    return Array.from(this.tasks.values())
-      .filter(task => task.userId === userId && task.photoTaken && task.photoUrl)
-      .sort((a, b) => {
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        return dateB - dateA;
-      });
+    return db.select()
+      .from(dailyTasks)
+      .where(eq(dailyTasks.userId, userId))
+      .where(eq(dailyTasks.photoTaken, true));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
