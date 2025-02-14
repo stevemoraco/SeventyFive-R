@@ -5,9 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 
 export function DashboardHeader() {
   const { user } = useAuth();
-  const currentDay = 1; // Always Day 1
   const today = new Date();
-  const formattedDate = format(today, "'Progress for Day' d '—' EEEE, MMMM do, yyyy");
+  const formattedDate = format(today, "'Progress for Day' 1 '—' EEEE, MMMM do, yyyy");
 
   // Fetch daily tasks to calculate progress
   const { data: dailyTasks } = useQuery({
@@ -25,7 +24,7 @@ export function DashboardHeader() {
 
   // Calculate daily progress based on completed tasks
   const dailyProgress = dailyTasks || 0;
-  const totalProgress = (currentDay / 75) * 100;
+  const totalProgress = (1 / 75) * 100; // Always use 1 as current day
 
   return (
     <div className="bg-background border-b px-6 py-6">
