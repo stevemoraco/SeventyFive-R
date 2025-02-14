@@ -71,11 +71,6 @@ export function ReminderSettingsCard() {
 
   const handleToggleReminder = (taskId: string, enabled: boolean) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to set reminders",
-        variant: "destructive",
-      });
       setShowLoginAlert(true);
       return;
     }
@@ -94,11 +89,6 @@ export function ReminderSettingsCard() {
 
   const handleTimeChange = (taskId: string, time: string, index?: number) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to set reminders",
-        variant: "destructive",
-      });
       setShowLoginAlert(true);
       return;
     }
@@ -123,11 +113,6 @@ export function ReminderSettingsCard() {
 
   const addAdditionalReminder = (taskId: string) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to set reminders",
-        variant: "destructive",
-      });
       setShowLoginAlert(true);
       return;
     }
@@ -150,11 +135,6 @@ export function ReminderSettingsCard() {
 
   const removeAdditionalReminder = (taskId: string, index: number) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to set reminders",
-        variant: "destructive",
-      });
       setShowLoginAlert(true);
       return;
     }
@@ -174,11 +154,6 @@ export function ReminderSettingsCard() {
 
   const toggleAdditionalReminder = (taskId: string, index: number, enabled: boolean) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to set reminders",
-        variant: "destructive",
-      });
       setShowLoginAlert(true);
       return;
     }
@@ -200,11 +175,6 @@ export function ReminderSettingsCard() {
 
   const handleTogglePanicMode = (enabled: boolean) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to set reminders",
-        variant: "destructive",
-      });
       setShowLoginAlert(true);
       return;
     }
@@ -220,11 +190,6 @@ export function ReminderSettingsCard() {
 
   const handlePanicTimeChange = (time: string) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to set reminders",
-        variant: "destructive",
-      });
       setShowLoginAlert(true);
       return;
     }
@@ -240,11 +205,6 @@ export function ReminderSettingsCard() {
 
   const handlePanicIntervalChange = (intervalMinutes: number) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to set reminders",
-        variant: "destructive",
-      });
       setShowLoginAlert(true);
       return;
     }
