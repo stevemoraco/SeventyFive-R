@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { log } from "./vite";
 
 declare global {
   namespace Express {
@@ -54,18 +55,25 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        log(`[auth] Attempting login for username: ${username}`);
         const user = await storage.getUserByUsername(username);
+
         if (!user) {
+          log(`[auth] User not found: ${username}`);
           return done(null, false, { message: "Invalid username or password" });
         }
 
         const isValidPassword = await comparePasswords(password, user.password);
+        log(`[auth] Password validation result for ${username}: ${isValidPassword}`);
+
         if (!isValidPassword) {
           return done(null, false, { message: "Invalid username or password" });
         }
 
+        log(`[auth] Login successful for user: ${username}`);
         return done(null, user);
       } catch (error) {
+        log(`[auth] Error during login: ${error}`);
         return done(error);
       }
     }),
@@ -95,6 +103,8 @@ export function setupAuth(app: Express) {
       }
 
       const hashedPassword = await hashPassword(req.body.password);
+      log(`[auth] Creating new user with username: ${req.body.username}`);
+
       const user = await storage.createUser({
         ...req.body,
         password: hashedPassword,
@@ -105,6 +115,7 @@ export function setupAuth(app: Express) {
         res.status(201).json(user);
       });
     } catch (error) {
+      log(`[auth] Error during registration: ${error}`);
       next(error);
     }
   });
