@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { CustomChallenge } from "@shared/schema";
 import { PageHeader } from "@/components/page-header";
+import { DashboardHeader } from "@/components/dashboard-header";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -21,6 +22,7 @@ export default function HomePage() {
 
   return (
     <div className="pb-20">
+      <DashboardHeader />
       <PageHeader title={getChallengeName()}>
         {!user && (
           <Link href="/auth">
@@ -28,7 +30,6 @@ export default function HomePage() {
           </Link>
         )}
       </PageHeader>
-      {user && <p className="px-4 py-2 text-sm text-muted-foreground">Day {user.currentDay}</p>}
 
       <TaskList />
       <BottomNav />
