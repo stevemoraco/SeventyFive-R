@@ -34,11 +34,11 @@ export default function AuthPage() {
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="login">
                 <LoginForm />
               </TabsContent>
-              
+
               <TabsContent value="register">
                 <RegisterForm />
               </TabsContent>
@@ -46,7 +46,7 @@ export default function AuthPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="hidden lg:flex flex-1 bg-primary/5 items-center justify-center p-12">
         <div className="max-w-lg space-y-6 text-center">
           <h1 className="text-4xl font-bold">Transform Your Life</h1>
@@ -62,11 +62,20 @@ export default function AuthPage() {
 
 function LoginForm() {
   const { loginMutation } = useAuth();
-  const form = useForm<InsertUser>({
-    resolver: zodResolver(insertUserSchema),
+  const form = useForm<Pick<InsertUser, "username" | "password">>({
+    resolver: zodResolver(
+      insertUserSchema.pick({ 
+        username: true, 
+        password: true 
+      })
+    ),
+    defaultValues: {
+      username: "",
+      password: ""
+    }
   });
 
-  const onSubmit = (data: InsertUser) => {
+  const onSubmit = (data: Pick<InsertUser, "username" | "password">) => {
     loginMutation.mutate(data);
   };
 
@@ -85,7 +94,7 @@ function LoginForm() {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="password"
@@ -98,7 +107,7 @@ function LoginForm() {
             </FormItem>
           )}
         />
-        
+
         <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
           {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Login
@@ -133,7 +142,7 @@ function RegisterForm() {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="password"
@@ -146,7 +155,7 @@ function RegisterForm() {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="challengeType"
@@ -165,7 +174,7 @@ function RegisterForm() {
             </FormItem>
           )}
         />
-        
+
         <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
           {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Register
