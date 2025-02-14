@@ -11,6 +11,7 @@ export const users = pgTable("users", {
   currentDay: integer("current_day").default(1),
   achievements: json("achievements").default({}).notNull(),
   customChallenges: json("custom_challenges").default([]).notNull(),
+  currentCustomChallengeId: text("current_custom_challenge_id"),
 });
 
 export const dailyTasks = pgTable("daily_tasks", {

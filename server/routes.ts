@@ -80,10 +80,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/user/challenge", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const user = await storage.updateUser(req.user.id, {
+
+    const updateData: Partial<User> = {
       challengeType: req.body.challengeType,
       currentDay: req.body.currentDay || 1,
-    });
+    };
+
+    // If switching to a custom challenge, store the challenge ID
+    if (req.body.challengeType === "custom" && req.body.customChallengeId) {
+      updateData.currentCustomChallengeId = req.body.customChallengeId;
+    } else {
+      // Clear the custom challenge ID when switching to a built-in variant
+      updateData.currentCustomChallengeId = null;
+    }
+
+    const user = await storage.updateUser(req.user.id, updateData);
     res.json(user);
   });
 

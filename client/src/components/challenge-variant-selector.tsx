@@ -4,6 +4,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -21,12 +22,14 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { CustomChallenge } from "@shared/schema";
 
 export function ChallengeVariantSelector() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  const [selectedCustomChallenge, setSelectedCustomChallenge] = useState<CustomChallenge | null>(null);
 
   const updateVariantMutation = useMutation({
     mutationFn: async (variant: string) => {
@@ -46,7 +49,7 @@ export function ChallengeVariantSelector() {
     },
   });
 
-  const variants = {
+  const builtInVariants = {
     "75hard": {
       label: "75 Hard",
       description: "The original challenge: 2 workouts (one outdoors), strict diet, daily progress photo, no alcohol",
@@ -57,10 +60,28 @@ export function ChallengeVariantSelector() {
     },
   };
 
-  const handleVariantSelect = (variant: string) => {
-    if (variant === user?.challengeType) return;
+  const customChallenges = user?.customChallenges as CustomChallenge[] || [];
+
+  const handleVariantSelect = (variant: string, customChallenge?: CustomChallenge) => {
+    if (variant === user?.challengeType && !customChallenge) return;
     setSelectedVariant(variant);
+    setSelectedCustomChallenge(customChallenge || null);
     setShowConfirmDialog(true);
+  };
+
+  const getCurrentChallengeLabel = () => {
+    if (user?.challengeType === "custom") {
+      const currentCustomChallenge = customChallenges.find(c => c.id === user.currentCustomChallengeId);
+      return currentCustomChallenge?.name || "Custom Challenge";
+    }
+    return builtInVariants[user?.challengeType as keyof typeof builtInVariants]?.label || "Select Challenge";
+  };
+
+  const getDescription = () => {
+    if (selectedCustomChallenge) {
+      return selectedCustomChallenge.description;
+    }
+    return selectedVariant ? builtInVariants[selectedVariant as keyof typeof builtInVariants]?.description : "";
   };
 
   return (
@@ -68,12 +89,12 @@ export function ChallengeVariantSelector() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
-            {variants[user?.challengeType as keyof typeof variants]?.label}
+            {getCurrentChallengeLabel()}
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {Object.entries(variants).map(([value, { label }]) => (
+          {Object.entries(builtInVariants).map(([value, { label }]) => (
             <DropdownMenuItem
               key={value}
               onClick={() => handleVariantSelect(value)}
@@ -81,6 +102,20 @@ export function ChallengeVariantSelector() {
               {label}
             </DropdownMenuItem>
           ))}
+
+          {customChallenges.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              {customChallenges.map((challenge) => (
+                <DropdownMenuItem
+                  key={challenge.id}
+                  onClick={() => handleVariantSelect("custom", challenge)}
+                >
+                  {challenge.name}
+                </DropdownMenuItem>
+              ))}
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -89,7 +124,7 @@ export function ChallengeVariantSelector() {
           <AlertDialogHeader>
             <AlertDialogTitle>Change Challenge Type?</AlertDialogTitle>
             <AlertDialogDescription>
-              {selectedVariant && variants[selectedVariant as keyof typeof variants]?.description}
+              {getDescription()}
               <br /><br />
               This will reset your progress to Day 1. Are you sure you want to continue?
             </AlertDialogDescription>
@@ -97,8 +132,8 @@ export function ChallengeVariantSelector() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
-              if (selectedVariant) {
-                updateVariantMutation.mutate(selectedVariant);
+              if (selectedVariant || selectedCustomChallenge) {
+                updateVariantMutation.mutate(selectedVariant || "custom"); //Mutate with "custom" if custom challenge selected
               }
               setShowConfirmDialog(false);
             }}>Continue</AlertDialogAction>
