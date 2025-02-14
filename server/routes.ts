@@ -166,6 +166,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(theme);
   });
 
+  app.get("/api/challenges", async (_req, res) => {
+    const customChallenges = await storage.getAllCustomChallenges();
+    const challengeStats = await storage.getChallengeStats();
+    res.json({ customChallenges, challengeStats });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

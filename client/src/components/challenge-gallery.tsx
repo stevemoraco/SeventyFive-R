@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CustomChallenge } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Settings, ChevronDown, ChevronUp, Dumbbell, Droplet, Book, Camera, Search, Users } from "lucide-react";
+import { Settings, ChevronDown, ChevronUp, Search, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,8 +25,14 @@ export function ChallengeGallery() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [selectedCustomChallenge, setSelectedCustomChallenge] = useState<CustomChallenge | null>(null);
+
+  // Fetch all challenges
+  const { data: challenges } = useQuery<{ customChallenges: CustomChallenge[], challengeStats: Record<string, { currentUsers: number, totalCompletions: number }> }>({
+    queryKey: ["/api/challenges"],
+  });
 
   const builtInVariants = {
     "75hard": {
@@ -62,8 +68,14 @@ export function ChallengeGallery() {
   });
 
   const handleVariantSelect = (variant: string, customChallenge?: CustomChallenge) => {
+    if (!user) {
+      setShowLoginAlert(true);
+      return;
+    }
+
     if (variant === user?.challengeType && 
         (!customChallenge || customChallenge.id === user.currentCustomChallengeId)) return;
+
     setSelectedVariant(variant);
     setSelectedCustomChallenge(customChallenge || null);
     setShowConfirmDialog(true);
@@ -81,8 +93,8 @@ export function ChallengeGallery() {
     return features;
   };
 
-  const customChallenges = user?.customChallenges as CustomChallenge[] || [];
-  const challengeStats = user?.challengeStats as Record<string, { currentUsers: number, totalCompletions: number }> || {};
+  const customChallenges = challenges?.customChallenges || [];
+  const challengeStats = challenges?.challengeStats || {};
 
   // Sort challenges by popularity (current users)
   const sortedCustomChallenges = [...customChallenges].sort((a, b) => {
@@ -212,6 +224,22 @@ export function ChallengeGallery() {
               }
               setShowConfirmDialog(false);
             }}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showLoginAlert} onOpenChange={setShowLoginAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Authentication Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              You need to be logged in to switch challenges. Please sign in or create an account to continue.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowLoginAlert(false)}>
+              OK
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
