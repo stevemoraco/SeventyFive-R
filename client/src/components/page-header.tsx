@@ -1,4 +1,3 @@
-import { ThemeSwitcher } from "./theme-switcher";
 import { ReactNode } from "react";
 
 interface PageHeaderProps {
@@ -14,7 +13,6 @@ export function PageHeader({ title, children }: PageHeaderProps) {
           <h1 className="text-lg font-semibold">{title}</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <ThemeSwitcher />
           {children}
         </div>
       </div>

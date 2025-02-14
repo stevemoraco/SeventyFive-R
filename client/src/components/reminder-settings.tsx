@@ -91,7 +91,7 @@ export function ReminderSettingsCard() {
           ...taskReminder,
           time: index === undefined ? time : taskReminder.time,
           additionalReminders: index !== undefined
-            ? taskReminder.additionalReminders.map((reminder, i) => 
+            ? taskReminder.additionalReminders.map((reminder, i) =>
                 i === index ? { ...reminder, time } : reminder
               )
             : taskReminder.additionalReminders,
@@ -197,8 +197,8 @@ export function ReminderSettingsCard() {
               const isExpanded = expandedTask === task.id;
 
               return (
-                <div key={task.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
+                <div key={task.id} className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center space-x-2">
                       {reminder.enabled ? (
                         <Bell className="h-4 w-4 text-primary" />
@@ -207,30 +207,42 @@ export function ReminderSettingsCard() {
                       )}
                       <span className="font-medium">{task.label}</span>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 sm:space-x-4">
                       <Input
                         type="time"
                         value={reminder.time}
                         onChange={(e) => handleTimeChange(task.id, e.target.value)}
-                        className="w-32"
+                        className="w-28 sm:w-32 h-9"
                         disabled={!reminder.enabled}
                       />
-                      <Switch
-                        checked={reminder.enabled}
-                        onCheckedChange={(checked) => handleToggleReminder(task.id, checked)}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setExpandedTask(isExpanded ? null : task.id)}
-                      >
-                        {isExpanded ? "Hide" : "More"}
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={reminder.enabled}
+                          onCheckedChange={(checked) => handleToggleReminder(task.id, checked)}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setExpandedTask(isExpanded ? null : task.id)}
+                          className="hidden sm:inline-flex"
+                        >
+                          {isExpanded ? "Hide" : "More"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setExpandedTask(isExpanded ? null : task.id)}
+                    className="w-full sm:hidden text-sm py-1"
+                  >
+                    {isExpanded ? "Hide Additional Reminders" : "Show Additional Reminders"}
+                  </Button>
+
                   {isExpanded && (
-                    <div className="pl-6 space-y-2">
+                    <div className="pl-4 sm:pl-6 space-y-3">
                       <div className="flex items-center justify-between text-sm text-gray-500">
                         <span>Additional Reminders</span>
                         <Button
@@ -240,34 +252,36 @@ export function ReminderSettingsCard() {
                           disabled={!reminder.enabled}
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Add Reminder
+                          Add
                         </Button>
                       </div>
 
                       {reminder.additionalReminders.map((additionalReminder, index) => (
-                        <div key={index} className="flex items-center space-x-4 pl-4">
-                          <Clock className="h-4 w-4 text-gray-400" />
+                        <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 pl-4">
+                          <Clock className="h-4 w-4 text-gray-400 hidden sm:block" />
                           <Input
                             type="time"
                             value={additionalReminder.time}
                             onChange={(e) => handleTimeChange(task.id, e.target.value, index)}
-                            className="w-32"
+                            className="w-28 sm:w-32 h-9"
                             disabled={!reminder.enabled || !additionalReminder.enabled}
                           />
-                          <Switch
-                            checked={additionalReminder.enabled}
-                            onCheckedChange={(checked) => 
-                              toggleAdditionalReminder(task.id, index, checked)
-                            }
-                            disabled={!reminder.enabled}
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeAdditionalReminder(task.id, index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              checked={additionalReminder.enabled}
+                              onCheckedChange={(checked) =>
+                                toggleAdditionalReminder(task.id, index, checked)
+                              }
+                              disabled={!reminder.enabled}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeAdditionalReminder(task.id, index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -280,7 +294,7 @@ export function ReminderSettingsCard() {
           <div className="pt-4">
             <Separator className="mb-4" />
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center space-x-2">
                   <AlertTriangle className={`h-5 w-5 ${reminderSettings.panicMode.enabled ? 'text-red-500' : 'text-gray-400'}`} />
                   <div>
@@ -296,14 +310,14 @@ export function ReminderSettingsCard() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Check Time</label>
                   <Input
                     type="time"
                     value={reminderSettings.panicMode.time}
                     onChange={(e) => handlePanicTimeChange(e.target.value)}
-                    className="mt-1"
+                    className="mt-1 h-9"
                     disabled={!reminderSettings.panicMode.enabled}
                   />
                   <p className="text-sm text-gray-500 mt-1">
@@ -319,7 +333,7 @@ export function ReminderSettingsCard() {
                     max="120"
                     value={reminderSettings.panicMode.intervalMinutes}
                     onChange={(e) => handlePanicIntervalChange(parseInt(e.target.value))}
-                    className="mt-1"
+                    className="mt-1 h-9"
                     disabled={!reminderSettings.panicMode.enabled}
                   />
                   <p className="text-sm text-gray-500 mt-1">
