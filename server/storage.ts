@@ -142,13 +142,18 @@ export class DatabaseStorage implements IStorage {
     const dateStr = tasks.date;
     const [previousDayTasks] = await db.select()
       .from(dailyTasks)
-      .where(eq(dailyTasks.userId, userId))
-      .where(eq(dailyTasks.date, new Date(new Date(dateStr).getTime() - 86400000).toISOString().split('T')[0]));
+      .where(and(
+        eq(dailyTasks.userId, userId),
+        eq(dailyTasks.date, new Date(new Date(dateStr).getTime() - 86400000).toISOString().split('T')[0])
+      ));
 
     let streakDays = 0;
     let longestStreak = progress?.longestStreak || 0;
     let perfectDays = progress?.perfectDays || 0;
     let totalPhotos = progress?.totalPhotos || 0;
+    let totalRestarts = progress?.totalRestarts || 0;
+    let daysLost = progress?.daysLost || 0;
+    let previousStreaks = progress?.previousStreaks as number[] || [];
 
     if (progress) {
       streakDays = progress.streakDays;
@@ -180,6 +185,12 @@ export class DatabaseStorage implements IStorage {
         }
         perfectDays += 1;
       } else if (wasYesterdayComplete) {
+        // Track restart statistics when streak is broken
+        if (streakDays > 0) {
+          totalRestarts += 1;
+          daysLost += streakDays;
+          previousStreaks.push(streakDays);
+        }
         streakDays = 0;
       }
 
@@ -224,6 +235,10 @@ export class DatabaseStorage implements IStorage {
         perfectDays: perfectDays,
         longestStreak: longestStreak,
         totalPhotos: totalPhotos,
+        totalRestarts: totalRestarts,
+        daysLost: daysLost,
+        previousStreaks: previousStreaks,
+        lastRestartDate: streakDays === 0 ? new Date().toISOString().split('T')[0] : progress.lastRestartDate,
       }
       : {
         userId,
@@ -234,6 +249,10 @@ export class DatabaseStorage implements IStorage {
         perfectDays: perfectDays,
         longestStreak: longestStreak,
         totalPhotos: totalPhotos,
+        totalRestarts: 0,
+        daysLost: 0,
+        lastRestartDate: null,
+        previousStreaks: [],
         stats: {},
       };
 
@@ -245,55 +264,6 @@ export class DatabaseStorage implements IStorage {
         .where(eq(userProgress.id, progress.id));
     }
     await this.checkAndUpdateAchievements(userId, updatedProgress);
-  }
-
-  private async checkAndUpdateAchievements(userId: number, progress: UserProgress) {
-    const user = await this.getUser(userId);
-    if (!user) return;
-
-    const userAchievements = user.achievements as Record<string, boolean> || {};
-    let achievementsUpdated = false;
-
-    const { achievements } = await import("@shared/achievements");
-
-    achievements.forEach((achievement) => {
-      if (userAchievements[achievement.id]) return;
-
-      let requirement = achievement.requirement;
-      let achieved = false;
-
-      switch (requirement.type) {
-        case 'streak':
-          achieved = progress.streakDays >= requirement.count;
-          break;
-        case 'perfectDays':
-          achieved = progress.perfectDays >= requirement.count;
-          break;
-        case 'workouts':
-          achieved = progress.totalWorkouts >= requirement.count;
-          break;
-        case 'water':
-          achieved = progress.totalWaterGallons >= requirement.count;
-          break;
-        case 'reading':
-          achieved = progress.totalReadingMinutes >= requirement.count;
-          break;
-        case 'photos':
-          achieved = progress.totalPhotos >= requirement.count;
-          break;
-      }
-
-      if (achieved) {
-        userAchievements[achievement.id] = true;
-        achievementsUpdated = true;
-      }
-    });
-
-    if (achievementsUpdated) {
-      await this.updateUser(userId, {
-        achievements: userAchievements,
-      });
-    }
   }
 
   async getUserProgress(userId: number): Promise<UserProgress> {
@@ -310,6 +280,10 @@ export class DatabaseStorage implements IStorage {
         perfectDays: 0,
         longestStreak: 0,
         totalPhotos: 0,
+        totalRestarts: 0,
+        daysLost: 0,
+        lastRestartDate: null,
+        previousStreaks: [],
       }).returning();
       return newProgress;
     }

@@ -98,6 +98,11 @@ export const userProgress = pgTable("user_progress", {
   perfectDays: integer("perfect_days").default(0).notNull(),
   longestStreak: integer("longest_streak").default(0).notNull(),
   totalPhotos: integer("total_photos").default(0).notNull(),
+  // Add new fields for tracking failures
+  totalRestarts: integer("total_restarts").default(0).notNull(),
+  daysLost: integer("days_lost").default(0).notNull(),
+  lastRestartDate: text("last_restart_date"),
+  previousStreaks: json("previous_streaks").default([]).notNull(), // Array of previous streak lengths
 });
 
 // Add new table for photos

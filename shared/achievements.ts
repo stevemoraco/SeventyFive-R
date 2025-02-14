@@ -63,4 +63,33 @@ export const achievements: Achievement[] = [
     icon: 'star',
     requirement: { type: 'photos', count: 30 },
   },
+  // New achievements for perseverance
+  {
+    id: 'comeback_king',
+    name: 'Comeback King',
+    description: 'Return and achieve a 7-day streak after a restart',
+    icon: 'trophy',
+    requirement: { type: 'streak', count: 7 },
+  },
+  {
+    id: 'perseverance_master',
+    name: 'Perseverance Master',
+    description: 'Complete a 14-day streak after any number of restarts',
+    icon: 'flame',
+    requirement: { type: 'streak', count: 14 },
+  },
+  {
+    id: 'ultimate_warrior',
+    name: 'Ultimate Warrior',
+    description: 'Complete a 30-day streak regardless of past failures',
+    icon: 'star',
+    requirement: { type: 'streak', count: 30 },
+  },
+  {
+    id: 'iron_will',
+    name: 'Iron Will',
+    description: 'Complete 75 days with perfect task completion',
+    icon: 'trophy',
+    requirement: { type: 'perfectDays', count: 75 },
+  },
 ];
