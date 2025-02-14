@@ -1,12 +1,14 @@
 import { useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/bottom-nav";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChallengeGallery } from "@/components/challenge-gallery";
 import { CustomChallengeCreator } from "@/components/custom-challenge-creator";
 import { ReminderSettingsCard } from "@/components/reminder-settings";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { PageHeader } from "@/components/page-header";
 import { User, LogOut } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export default function ProfilePage() {
   const { user, logoutMutation } = useAuth();
@@ -29,6 +31,19 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Theme Settings</h3>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Choose your preferred appearance
+                    </p>
+                  </div>
+                  <ThemeSwitcher />
+                </div>
+                <Separator />
+              </div>
+
               <ReminderSettingsCard />
 
               <div className="border-t pt-6">

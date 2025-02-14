@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { UserProgress } from "@shared/schema";
 import { BottomNav } from "@/components/bottom-nav";
+import { ProgressComparison } from "@/components/progress-comparison";
 import { ProgressGallery } from "@/components/progress-gallery";
 import { AdvancedStats } from "@/components/advanced-stats";
 import { Card } from "@/components/ui/card";
 import { Trophy, Dumbbell, Droplet, Book } from "lucide-react";
 import { AchievementsList } from "@/components/achievements-list";
+import { PageHeader } from "@/components/page-header";
 
 export default function ProgressPage() {
   const { data: progress } = useQuery<UserProgress>({
@@ -16,11 +18,11 @@ export default function ProgressPage() {
 
   return (
     <div className="pb-20">
-      <div className="bg-white border-b px-4 py-3 sticky top-0 z-10">
-        <h1 className="text-lg font-semibold">Progress</h1>
-      </div>
+      <PageHeader title="Progress" />
 
       <div className="p-4 space-y-6">
+        <ProgressComparison />
+
         <div className="grid grid-cols-2 gap-4">
           <StatsCard
             icon={<Trophy className="h-5 w-5 text-yellow-500" />}
