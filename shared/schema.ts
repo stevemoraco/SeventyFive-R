@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   challengeType: text("challenge_type").notNull().default("75hard"),
   startDate: text("start_date"),
   currentDay: integer("current_day").default(1),
+  achievements: json("achievements").default({}).notNull(),
 });
 
 export const dailyTasks = pgTable("daily_tasks", {
@@ -33,6 +34,9 @@ export const userProgress = pgTable("user_progress", {
   totalReadingMinutes: integer("total_reading_minutes").default(0).notNull(),
   streakDays: integer("streak_days").default(0).notNull(),
   stats: json("stats").default({}).notNull(),
+  perfectDays: integer("perfect_days").default(0).notNull(),
+  longestStreak: integer("longest_streak").default(0).notNull(),
+  totalPhotos: integer("total_photos").default(0).notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({

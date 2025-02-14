@@ -107,33 +107,46 @@ export class DatabaseStorage implements IStorage {
       .where(eq(dailyTasks.date, new Date(new Date(dateStr).getTime() - 86400000).toISOString().split('T')[0]));
 
     let streakDays = 0;
+    let longestStreak = progress?.longestStreak || 0;
+    let perfectDays = progress?.perfectDays || 0;
+    let totalPhotos = progress?.totalPhotos || 0;
+
     if (progress) {
       streakDays = progress.streakDays;
 
       // Check if all tasks are complete for today
       const isTodayComplete = tasks.workout1Complete && 
-                            tasks.workout2Complete && 
-                            tasks.waterComplete && 
-                            tasks.readingComplete && 
-                            tasks.dietComplete && 
-                            tasks.photoTaken;
+                          tasks.workout2Complete && 
+                          tasks.waterComplete && 
+                          tasks.readingComplete && 
+                          tasks.dietComplete && 
+                          tasks.photoTaken;
 
       // Check if yesterday was complete (if it exists)
       const wasYesterdayComplete = previousDayTasks && 
-                                  previousDayTasks.workout1Complete && 
-                                  previousDayTasks.workout2Complete && 
-                                  previousDayTasks.waterComplete && 
-                                  previousDayTasks.readingComplete && 
-                                  previousDayTasks.dietComplete && 
-                                  previousDayTasks.photoTaken;
+                                previousDayTasks.workout1Complete && 
+                                previousDayTasks.workout2Complete && 
+                                previousDayTasks.waterComplete && 
+                                previousDayTasks.readingComplete && 
+                                previousDayTasks.dietComplete && 
+                                previousDayTasks.photoTaken;
 
-      // Update streak
+      // Update streak and perfect days
       if (isTodayComplete) {
         if (wasYesterdayComplete || !previousDayTasks) {
           streakDays += 1;
+          if (streakDays > longestStreak) {
+            longestStreak = streakDays;
+          }
         }
+        perfectDays += 1;
       } else if (wasYesterdayComplete) {
-        streakDays = 0; // Break streak if today is incomplete but yesterday was complete
+        streakDays = 0;
+      }
+
+      // Update total photos
+      if (tasks.photoTaken && tasks.photoUrl) {
+        totalPhotos += 1;
       }
     }
 
@@ -144,6 +157,9 @@ export class DatabaseStorage implements IStorage {
         totalWaterGallons: tasks.waterComplete ? 1 : 0,
         totalReadingMinutes: tasks.readingComplete ? 10 : 0,
         streakDays: streakDays,
+        perfectDays: perfectDays,
+        longestStreak: longestStreak,
+        totalPhotos: totalPhotos,
         stats: {},
       });
     } else {
@@ -153,6 +169,9 @@ export class DatabaseStorage implements IStorage {
           totalWaterGallons: progress.totalWaterGallons + (tasks.waterComplete ? 1 : 0),
           totalReadingMinutes: progress.totalReadingMinutes + (tasks.readingComplete ? 10 : 0),
           streakDays: streakDays,
+          perfectDays: perfectDays,
+          longestStreak: longestStreak,
+          totalPhotos: totalPhotos,
         })
         .where(eq(userProgress.id, progress.id));
     }
@@ -169,6 +188,9 @@ export class DatabaseStorage implements IStorage {
         totalReadingMinutes: 0,
         streakDays: 0,
         stats: {},
+        perfectDays: 0,
+        longestStreak: 0,
+        totalPhotos: 0,
       }).returning();
       return newProgress;
     }

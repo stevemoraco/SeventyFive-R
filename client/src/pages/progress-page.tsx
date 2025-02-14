@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { UserProgress } from "@shared/schema";
 import { BottomNav } from "@/components/bottom-nav";
 import { ProgressGallery } from "@/components/progress-gallery";
+import { AdvancedStats } from "@/components/advanced-stats";
 import { Card } from "@/components/ui/card";
 import { Trophy, Dumbbell, Droplet, Book } from "lucide-react";
 
@@ -9,6 +10,8 @@ export default function ProgressPage() {
   const { data: progress } = useQuery<UserProgress>({
     queryKey: ["/api/progress"],
   });
+
+  if (!progress) return null;
 
   return (
     <div className="pb-20">
@@ -21,29 +24,30 @@ export default function ProgressPage() {
           <StatsCard
             icon={<Trophy className="h-5 w-5 text-yellow-500" />}
             label="Streak"
-            value={progress?.streakDays || 0}
+            value={progress.streakDays}
             unit="days"
           />
           <StatsCard
             icon={<Dumbbell className="h-5 w-5 text-purple-500" />}
             label="Workouts"
-            value={progress?.totalWorkouts || 0}
+            value={progress.totalWorkouts}
             unit="completed"
           />
           <StatsCard
             icon={<Droplet className="h-5 w-5 text-blue-500" />}
             label="Water"
-            value={progress?.totalWaterGallons || 0}
+            value={progress.totalWaterGallons}
             unit="gallons"
           />
           <StatsCard
             icon={<Book className="h-5 w-5 text-green-500" />}
             label="Reading"
-            value={progress?.totalReadingMinutes || 0}
+            value={progress.totalReadingMinutes}
             unit="minutes"
           />
         </div>
 
+        <AdvancedStats progress={progress} />
         <ProgressGallery />
       </div>
 
