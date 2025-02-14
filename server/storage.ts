@@ -1,10 +1,9 @@
-import { users, dailyTasks, userProgress, type User, type InsertUser, type DailyTask, type UserProgress } from "@shared/schema";
+import { users, dailyTasks, userProgress, type User, type InsertUser, type DailyTask, type UserProgress, type CustomChallenge } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
-import { CustomChallenge } from "@shared/types";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -185,7 +184,6 @@ export class DatabaseStorage implements IStorage {
         totalPhotos += 1;
       }
 
-      //Added code from edited snippet
       if (streakDays === 75) {
         const user = await this.getUser(userId);
         if (user) {
