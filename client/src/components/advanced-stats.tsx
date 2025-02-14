@@ -1,4 +1,5 @@
 import { UserProgress } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
 import { Trophy, Star, Calendar, Flame, AlertTriangle, History } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -9,6 +10,7 @@ interface AdvancedStatsProps {
 }
 
 export function AdvancedStats({ progress }: AdvancedStatsProps) {
+  const { user } = useAuth();
   const achievements = [
     {
       icon: <Trophy className="h-5 w-5 text-yellow-500" />,
@@ -51,8 +53,8 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
     },
   ];
 
-  // Calculate achievement progress
-  const userAchievements = (progress.stats as Record<string, boolean>) || {};
+  // Calculate achievement progress using user's achievements
+  const userAchievements = user?.achievements || {};
   const totalAchievements = allAchievements.length;
   const unlockedAchievements = Object.values(userAchievements).filter(Boolean).length;
   const achievementProgress = (unlockedAchievements / totalAchievements) * 100;
