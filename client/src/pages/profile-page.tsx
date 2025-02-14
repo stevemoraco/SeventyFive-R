@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/bottom-nav";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChallengeGallery } from "@/components/challenge-gallery";
 import { CustomChallengeCreator } from "@/components/custom-challenge-creator";
@@ -10,9 +10,23 @@ import { PageHeader } from "@/components/page-header";
 import { User, LogOut, LogIn } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { DailyTask } from "@shared/schema";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function ProfilePage() {
   const { user, logoutMutation } = useAuth();
+
+  // Fetch photos for the profile picture
+  const { data: photos } = useQuery<DailyTask[]>({
+    queryKey: ["/api/progress/photos"],
+    enabled: !!user,
+  });
+
+  // Get the oldest photo for the profile picture
+  const oldestPhoto = photos?.sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  )[0];
 
   return (
     <div className="pb-20">
@@ -23,9 +37,19 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-4 mb-6">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-6 w-6 text-primary" />
-                </div>
+                <Avatar className="h-12 w-12">
+                  {oldestPhoto?.photoUrl ? (
+                    <AvatarImage 
+                      src={oldestPhoto.photoUrl} 
+                      alt="Profile"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <AvatarFallback>
+                      <User className="h-6 w-6 text-primary" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
                 <div>
                   <h2 className="font-medium">{user.username}</h2>
                   <p className="text-sm text-gray-500">Day {user.currentDay}</p>

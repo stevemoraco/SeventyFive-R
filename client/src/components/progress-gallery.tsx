@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { DailyTask } from "@shared/schema";
 import { Card } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import { Calendar, MessageSquare } from "lucide-react";
 
 export function ProgressGallery() {
   const { data: photos } = useQuery<DailyTask[]>({
@@ -16,23 +16,44 @@ export function ProgressGallery() {
     );
   }
 
+  // Sort photos by date in descending order (newest first)
+  const sortedPhotos = [...photos].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Progress Photos</h2>
-      <div className="grid grid-cols-3 gap-2">
-        {photos.map((photo) => (
-          <div key={photo.id} className="aspect-square relative">
+      <div className="space-y-4">
+        {sortedPhotos.map((photo) => (
+          <div key={photo.id} className="space-y-2">
             {photo.photoUrl && (
-              <img
-                src={photo.photoUrl}
-                alt={`Progress photo from day ${photo.id}`}
-                className="object-cover rounded-lg w-full h-full"
-              />
+              <div className="relative">
+                <img
+                  src={photo.photoUrl}
+                  alt={`Progress photo from day ${photo.id}`}
+                  className="w-full rounded-lg object-cover aspect-square"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.src = '/placeholder-image.png';
+                  }}
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-2 rounded-b-lg flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {new Date(photo.date).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
             )}
-            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 rounded-b-lg flex items-center justify-center">
-              <Calendar className="h-3 w-3 mr-1" />
-              {new Date(photo.date).toLocaleDateString()}
-            </div>
+            {photo.notes && (
+              <Card className="p-4">
+                <div className="flex items-start space-x-2">
+                  <MessageSquare className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
+                  <p className="text-sm text-muted-foreground">{photo.notes}</p>
+                </div>
+              </Card>
+            )}
           </div>
         ))}
       </div>
