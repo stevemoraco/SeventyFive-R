@@ -2,9 +2,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChallengeVariantSelector } from "@/components/challenge-variant-selector";
+import { ChallengeGallery } from "@/components/challenge-gallery";
 import { CustomChallengeCreator } from "@/components/custom-challenge-creator";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, logoutMutation } = useAuth();
@@ -29,13 +29,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center space-x-2">
-                  <Settings className="h-4 w-4" />
-                  <span>Challenge Type</span>
-                </label>
-                <ChallengeVariantSelector />
-              </div>
+              <ChallengeGallery />
 
               <div className="pt-4 border-t">
                 <CustomChallengeCreator />
