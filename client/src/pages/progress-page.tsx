@@ -5,6 +5,7 @@ import { ProgressGallery } from "@/components/progress-gallery";
 import { AdvancedStats } from "@/components/advanced-stats";
 import { Card } from "@/components/ui/card";
 import { Trophy, Dumbbell, Droplet, Book } from "lucide-react";
+import { AchievementsList } from "@/components/achievements-list";
 
 export default function ProgressPage() {
   const { data: progress } = useQuery<UserProgress>({
@@ -48,6 +49,7 @@ export default function ProgressPage() {
         </div>
 
         <AdvancedStats progress={progress} />
+        <AchievementsList />
         <ProgressGallery />
       </div>
 
@@ -56,12 +58,12 @@ export default function ProgressPage() {
   );
 }
 
-function StatsCard({ 
-  icon, 
-  label, 
-  value, 
-  unit 
-}: { 
+function StatsCard({
+  icon,
+  label,
+  value,
+  unit,
+}: {
   icon: React.ReactNode;
   label: string;
   value: number;

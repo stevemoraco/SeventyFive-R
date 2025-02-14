@@ -115,21 +115,21 @@ export class DatabaseStorage implements IStorage {
       streakDays = progress.streakDays;
 
       // Check if all tasks are complete for today
-      const isTodayComplete = tasks.workout1Complete && 
-                          tasks.workout2Complete && 
-                          tasks.waterComplete && 
-                          tasks.readingComplete && 
-                          tasks.dietComplete && 
-                          tasks.photoTaken;
+      const isTodayComplete = tasks.workout1Complete &&
+        tasks.workout2Complete &&
+        tasks.waterComplete &&
+        tasks.readingComplete &&
+        tasks.dietComplete &&
+        tasks.photoTaken;
 
       // Check if yesterday was complete (if it exists)
-      const wasYesterdayComplete = previousDayTasks && 
-                                previousDayTasks.workout1Complete && 
-                                previousDayTasks.workout2Complete && 
-                                previousDayTasks.waterComplete && 
-                                previousDayTasks.readingComplete && 
-                                previousDayTasks.dietComplete && 
-                                previousDayTasks.photoTaken;
+      const wasYesterdayComplete = previousDayTasks &&
+        previousDayTasks.workout1Complete &&
+        previousDayTasks.workout2Complete &&
+        previousDayTasks.waterComplete &&
+        previousDayTasks.readingComplete &&
+        previousDayTasks.dietComplete &&
+        previousDayTasks.photoTaken;
 
       // Update streak and perfect days
       if (isTodayComplete) {
@@ -150,8 +150,18 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    if (!progress) {
-      await db.insert(userProgress).values({
+    const updatedProgress = progress
+      ? {
+        ...progress,
+        totalWorkouts: progress.totalWorkouts + ((tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0)),
+        totalWaterGallons: progress.totalWaterGallons + (tasks.waterComplete ? 1 : 0),
+        totalReadingMinutes: progress.totalReadingMinutes + (tasks.readingComplete ? 10 : 0),
+        streakDays: streakDays,
+        perfectDays: perfectDays,
+        longestStreak: longestStreak,
+        totalPhotos: totalPhotos,
+      }
+      : {
         userId,
         totalWorkouts: (tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0),
         totalWaterGallons: tasks.waterComplete ? 1 : 0,
@@ -161,19 +171,64 @@ export class DatabaseStorage implements IStorage {
         longestStreak: longestStreak,
         totalPhotos: totalPhotos,
         stats: {},
-      });
+      };
+
+    if (!progress) {
+      await db.insert(userProgress).values(updatedProgress);
     } else {
       await db.update(userProgress)
-        .set({
-          totalWorkouts: progress.totalWorkouts + ((tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0)),
-          totalWaterGallons: progress.totalWaterGallons + (tasks.waterComplete ? 1 : 0),
-          totalReadingMinutes: progress.totalReadingMinutes + (tasks.readingComplete ? 10 : 0),
-          streakDays: streakDays,
-          perfectDays: perfectDays,
-          longestStreak: longestStreak,
-          totalPhotos: totalPhotos,
-        })
+        .set(updatedProgress)
         .where(eq(userProgress.id, progress.id));
+    }
+    await this.checkAndUpdateAchievements(userId, updatedProgress);
+  }
+
+  private async checkAndUpdateAchievements(userId: number, progress: UserProgress) {
+    const user = await this.getUser(userId);
+    if (!user) return;
+
+    const userAchievements = user.achievements as Record<string, boolean> || {};
+    let achievementsUpdated = false;
+
+    const { achievements } = await import("@shared/achievements");
+
+    achievements.forEach((achievement) => {
+      if (userAchievements[achievement.id]) return;
+
+      let requirement = achievement.requirement;
+      let achieved = false;
+
+      switch (requirement.type) {
+        case 'streak':
+          achieved = progress.streakDays >= requirement.count;
+          break;
+        case 'perfectDays':
+          achieved = progress.perfectDays >= requirement.count;
+          break;
+        case 'workouts':
+          achieved = progress.totalWorkouts >= requirement.count;
+          break;
+        case 'water':
+          achieved = progress.totalWaterGallons >= requirement.count;
+          break;
+        case 'reading':
+          achieved = progress.totalReadingMinutes >= requirement.count;
+          break;
+        case 'photos':
+          achieved = progress.totalPhotos >= requirement.count;
+          break;
+      }
+
+      if (achieved) {
+        userAchievements[achievement.id] = true;
+        achievementsUpdated = true;
+      }
+    });
+
+    if (achievementsUpdated) {
+      await this.updateUser(userId, {
+        achievements: userAchievements,
+      });
     }
   }
 
