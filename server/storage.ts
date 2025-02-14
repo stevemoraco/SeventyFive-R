@@ -266,6 +266,55 @@ export class DatabaseStorage implements IStorage {
     await this.checkAndUpdateAchievements(userId, updatedProgress);
   }
 
+  private async checkAndUpdateAchievements(userId: number, progress: UserProgress) {
+    const user = await this.getUser(userId);
+    if (!user) return;
+
+    const userAchievements = user.achievements as Record<string, boolean> || {};
+    let achievementsUpdated = false;
+
+    const { achievements } = await import("@shared/achievements");
+
+    achievements.forEach((achievement) => {
+      if (userAchievements[achievement.id]) return;
+
+      let requirement = achievement.requirement;
+      let achieved = false;
+
+      switch (requirement.type) {
+        case 'streak':
+          achieved = progress.streakDays >= requirement.count;
+          break;
+        case 'perfectDays':
+          achieved = progress.perfectDays >= requirement.count;
+          break;
+        case 'workouts':
+          achieved = progress.totalWorkouts >= requirement.count;
+          break;
+        case 'water':
+          achieved = progress.totalWaterGallons >= requirement.count;
+          break;
+        case 'reading':
+          achieved = progress.totalReadingMinutes >= requirement.count;
+          break;
+        case 'photos':
+          achieved = progress.totalPhotos >= requirement.count;
+          break;
+      }
+
+      if (achieved) {
+        userAchievements[achievement.id] = true;
+        achievementsUpdated = true;
+      }
+    });
+
+    if (achievementsUpdated) {
+      await this.updateUser(userId, {
+        achievements: userAchievements,
+      });
+    }
+  }
+
   async getUserProgress(userId: number): Promise<UserProgress> {
     const [progress] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
 
