@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { CustomChallenge } from "@shared/schema";
+import { PageHeader } from "@/components/page-header";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -20,19 +21,14 @@ export default function HomePage() {
 
   return (
     <div className="pb-20">
-      <div className="bg-white border-b px-4 py-3 sticky top-0 z-10">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-lg font-semibold">{getChallengeName()}</h1>
-            {user && <p className="text-sm text-gray-500">Day {user.currentDay}</p>}
-          </div>
-          {!user && (
-            <Link href="/auth">
-              <Button variant="outline" size="sm">Sign up to save progress</Button>
-            </Link>
-          )}
-        </div>
-      </div>
+      <PageHeader title={getChallengeName()}>
+        {!user && (
+          <Link href="/auth">
+            <Button variant="outline" size="sm">Sign up to save progress</Button>
+          </Link>
+        )}
+      </PageHeader>
+      {user && <p className="px-4 py-2 text-sm text-muted-foreground">Day {user.currentDay}</p>}
 
       <TaskList />
       <BottomNav />

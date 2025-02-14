@@ -136,6 +136,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(user);
   });
 
+  // Add theme update route
+  app.patch("/api/theme", (req, res) => {
+    const themeFile = path.join(process.cwd(), "theme.json");
+    const theme = JSON.parse(fs.readFileSync(themeFile, "utf8"));
+
+    if (req.body.appearance) {
+      theme.appearance = req.body.appearance;
+      fs.writeFileSync(themeFile, JSON.stringify(theme, null, 2));
+    }
+
+    res.json(theme);
+  });
 
   const httpServer = createServer(app);
   return httpServer;

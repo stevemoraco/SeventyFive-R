@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChallengeGallery } from "@/components/challenge-gallery";
 import { CustomChallengeCreator } from "@/components/custom-challenge-creator";
 import { ReminderSettingsCard } from "@/components/reminder-settings";
+import { PageHeader } from "@/components/page-header";
 import { User, LogOut } from "lucide-react";
 
 export default function ProfilePage() {
@@ -12,9 +13,7 @@ export default function ProfilePage() {
 
   return (
     <div className="pb-20">
-      <div className="bg-white border-b px-4 py-3 sticky top-0 z-10">
-        <h1 className="text-lg font-semibold">Profile & Settings</h1>
-      </div>
+      <PageHeader title="Profile & Settings" />
 
       <div className="p-4 space-y-4">
         <Card>
@@ -42,7 +41,7 @@ export default function ProfilePage() {
 
               <Button
                 variant="ghost"
-                className="w-full text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                className="w-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-50 dark:hover:bg-gray-800"
                 onClick={() => logoutMutation.mutate()}
               >
                 <LogOut className="h-4 w-4 mr-2" />
