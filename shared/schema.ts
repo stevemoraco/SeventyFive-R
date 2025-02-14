@@ -2,6 +2,19 @@ import { pgTable, text, serial, integer, boolean, date, json } from "drizzle-orm
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export interface TaskReminder {
+  time: string; // 24h format HH:mm
+  enabled: boolean;
+  additionalReminders: Array<{
+    time: string;
+    enabled: boolean;
+  }>;
+}
+
+export interface ReminderSettings {
+  taskReminders: Record<string, TaskReminder>;
+}
+
 export interface CustomChallenge {
   id: string;
   name: string;
@@ -23,12 +36,6 @@ export interface CustomChallenge {
   };
 }
 
-export interface ReminderSettings {
-  enabled: boolean;
-  time: string; // 24h format HH:mm
-  tasks: string[]; // Array of task IDs to remind about
-}
-
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -44,9 +51,14 @@ export const users = pgTable("users", {
     "75soft": { currentUsers: 0, totalCompletions: 0 }
   }).notNull(),
   reminderSettings: json("reminder_settings").default({
-    enabled: false,
-    time: "20:00", // Default reminder at 8 PM
-    tasks: []
+    taskReminders: {
+      workout1: { time: "09:00", enabled: false, additionalReminders: [] },
+      workout2: { time: "16:00", enabled: false, additionalReminders: [] },
+      water: { time: "08:00", enabled: false, additionalReminders: [] },
+      reading: { time: "20:00", enabled: false, additionalReminders: [] },
+      diet: { time: "07:00", enabled: false, additionalReminders: [] },
+      photo: { time: "21:00", enabled: false, additionalReminders: [] }
+    }
   }).notNull(),
 });
 

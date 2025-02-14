@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation } from "@tanstack/react-query";
-import { ReminderSettings } from "@shared/schema";
+import { ReminderSettings, TaskReminder } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Bell, BellOff } from "lucide-react";
+import { Plus, Trash2, Bell, BellOff, Clock } from "lucide-react";
 
 const AVAILABLE_TASKS = [
   { id: "workout1", label: "First Workout" },
@@ -23,10 +22,22 @@ const AVAILABLE_TASKS = [
 export function ReminderSettingsCard() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const reminderSettings = user?.reminderSettings as ReminderSettings || {
-    enabled: false,
-    time: "20:00",
-    tasks: [],
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+
+  const defaultReminders: Record<string, TaskReminder> = {
+    workout1: { time: "09:00", enabled: false, additionalReminders: [] },
+    workout2: { time: "16:00", enabled: false, additionalReminders: [] },
+    water: { time: "08:00", enabled: false, additionalReminders: [] },
+    reading: { time: "20:00", enabled: false, additionalReminders: [] },
+    diet: { time: "07:00", enabled: false, additionalReminders: [] },
+    photo: { time: "21:00", enabled: false, additionalReminders: [] },
+  };
+
+  const reminderSettings = {
+    taskReminders: {
+      ...defaultReminders,
+      ...(user?.reminderSettings as ReminderSettings)?.taskReminders,
+    },
   };
 
   const updateSettingsMutation = useMutation({
@@ -45,78 +56,175 @@ export function ReminderSettingsCard() {
     },
   });
 
-  const handleToggleTask = (taskId: string) => {
-    const tasks = reminderSettings.tasks.includes(taskId)
-      ? reminderSettings.tasks.filter(id => id !== taskId)
-      : [...reminderSettings.tasks, taskId];
-
-    updateSettingsMutation.mutate({
-      ...reminderSettings,
-      tasks,
-    });
+  const handleToggleReminder = (taskId: string, enabled: boolean) => {
+    const updatedSettings = {
+      taskReminders: {
+        ...reminderSettings.taskReminders,
+        [taskId]: {
+          ...reminderSettings.taskReminders[taskId],
+          enabled,
+        },
+      },
+    };
+    updateSettingsMutation.mutate(updatedSettings);
   };
 
-  const handleTimeChange = (time: string) => {
-    updateSettingsMutation.mutate({
-      ...reminderSettings,
-      time,
-    });
+  const handleTimeChange = (taskId: string, time: string, index?: number) => {
+    const taskReminder = reminderSettings.taskReminders[taskId];
+    const updatedSettings = {
+      taskReminders: {
+        ...reminderSettings.taskReminders,
+        [taskId]: {
+          ...taskReminder,
+          time: index === undefined ? time : taskReminder.time,
+          additionalReminders: index !== undefined
+            ? taskReminder.additionalReminders.map((reminder, i) => 
+                i === index ? { ...reminder, time } : reminder
+              )
+            : taskReminder.additionalReminders,
+        },
+      },
+    };
+    updateSettingsMutation.mutate(updatedSettings);
   };
 
-  const handleToggleEnabled = (enabled: boolean) => {
-    updateSettingsMutation.mutate({
-      ...reminderSettings,
-      enabled,
-    });
+  const addAdditionalReminder = (taskId: string) => {
+    const taskReminder = reminderSettings.taskReminders[taskId];
+    const updatedSettings = {
+      taskReminders: {
+        ...reminderSettings.taskReminders,
+        [taskId]: {
+          ...taskReminder,
+          additionalReminders: [
+            ...taskReminder.additionalReminders,
+            { time: taskReminder.time, enabled: true },
+          ],
+        },
+      },
+    };
+    updateSettingsMutation.mutate(updatedSettings);
+  };
+
+  const removeAdditionalReminder = (taskId: string, index: number) => {
+    const taskReminder = reminderSettings.taskReminders[taskId];
+    const updatedSettings = {
+      taskReminders: {
+        ...reminderSettings.taskReminders,
+        [taskId]: {
+          ...taskReminder,
+          additionalReminders: taskReminder.additionalReminders.filter((_, i) => i !== index),
+        },
+      },
+    };
+    updateSettingsMutation.mutate(updatedSettings);
+  };
+
+  const toggleAdditionalReminder = (taskId: string, index: number, enabled: boolean) => {
+    const taskReminder = reminderSettings.taskReminders[taskId];
+    const updatedSettings = {
+      taskReminders: {
+        ...reminderSettings.taskReminders,
+        [taskId]: {
+          ...taskReminder,
+          additionalReminders: taskReminder.additionalReminders.map((reminder, i) =>
+            i === index ? { ...reminder, enabled } : reminder
+          ),
+        },
+      },
+    };
+    updateSettingsMutation.mutate(updatedSettings);
   };
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center space-x-2">
-            {reminderSettings.enabled ? (
-              <Bell className="h-5 w-5 text-primary" />
-            ) : (
-              <BellOff className="h-5 w-5 text-gray-400" />
-            )}
-            <span>Daily Reminders</span>
-          </CardTitle>
-          <Switch
-            checked={reminderSettings.enabled}
-            onCheckedChange={handleToggleEnabled}
-          />
-        </div>
+        <CardTitle className="text-lg">Daily Task Reminders</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">Reminder Time</label>
-            <Input
-              type="time"
-              value={reminderSettings.time}
-              onChange={(e) => handleTimeChange(e.target.value)}
-              className="mt-1"
-              disabled={!reminderSettings.enabled}
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              Set a daily reminder time for your tasks
-            </p>
-          </div>
+          {AVAILABLE_TASKS.map((task) => {
+            const reminder = reminderSettings.taskReminders[task.id];
+            const isExpanded = expandedTask === task.id;
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Tasks to Remind</label>
-            {AVAILABLE_TASKS.map((task) => (
-              <div key={task.id} className="flex items-center space-x-2">
-                <Checkbox
-                  checked={reminderSettings.tasks.includes(task.id)}
-                  onCheckedChange={() => handleToggleTask(task.id)}
-                  disabled={!reminderSettings.enabled}
-                />
-                <span className="text-sm">{task.label}</span>
+            return (
+              <div key={task.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    {reminder.enabled ? (
+                      <Bell className="h-4 w-4 text-primary" />
+                    ) : (
+                      <BellOff className="h-4 w-4 text-gray-400" />
+                    )}
+                    <span className="font-medium">{task.label}</span>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <Input
+                      type="time"
+                      value={reminder.time}
+                      onChange={(e) => handleTimeChange(task.id, e.target.value)}
+                      className="w-32"
+                      disabled={!reminder.enabled}
+                    />
+                    <Switch
+                      checked={reminder.enabled}
+                      onCheckedChange={(checked) => handleToggleReminder(task.id, checked)}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setExpandedTask(isExpanded ? null : task.id)}
+                    >
+                      {isExpanded ? "Hide" : "More"}
+                    </Button>
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="pl-6 space-y-2">
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>Additional Reminders</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addAdditionalReminder(task.id)}
+                        disabled={!reminder.enabled}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Reminder
+                      </Button>
+                    </div>
+
+                    {reminder.additionalReminders.map((additionalReminder, index) => (
+                      <div key={index} className="flex items-center space-x-4 pl-4">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        <Input
+                          type="time"
+                          value={additionalReminder.time}
+                          onChange={(e) => handleTimeChange(task.id, e.target.value, index)}
+                          className="w-32"
+                          disabled={!reminder.enabled || !additionalReminder.enabled}
+                        />
+                        <Switch
+                          checked={additionalReminder.enabled}
+                          onCheckedChange={(checked) => 
+                            toggleAdditionalReminder(task.id, index, checked)
+                          }
+                          disabled={!reminder.enabled}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeAdditionalReminder(task.id, index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
