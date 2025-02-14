@@ -1,0 +1,107 @@
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { DailyTask } from "@shared/schema";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Camera, Dumbbell, Droplet, Book, Apple } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+export function TaskList() {
+  const [progress, setProgress] = useState(0);
+
+  const { data: tasks } = useQuery<DailyTask>({
+    queryKey: ["/api/tasks/today"],
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async (taskUpdate: Partial<DailyTask>) => {
+      const res = await apiRequest("PATCH", "/api/tasks/today", taskUpdate);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks/today"] });
+    },
+  });
+
+  const handleTaskToggle = (task: keyof DailyTask, checked: boolean) => {
+    updateTaskMutation.mutate({ [task]: checked });
+  };
+
+  return (
+    <div className="space-y-4 p-4">
+      <Progress value={progress} className="w-full h-2" />
+      
+      <Card className="p-4">
+        <div className="space-y-4">
+          <TaskItem
+            icon={<Dumbbell className="h-5 w-5" />}
+            label="First Workout"
+            checked={tasks?.workout1Complete}
+            onChange={(checked) => handleTaskToggle("workout1Complete", checked)}
+          />
+          
+          <TaskItem
+            icon={<Dumbbell className="h-5 w-5" />}
+            label="Second Workout"
+            checked={tasks?.workout2Complete}
+            onChange={(checked) => handleTaskToggle("workout2Complete", checked)}
+          />
+          
+          <TaskItem
+            icon={<Droplet className="h-5 w-5" />}
+            label="Drink Water"
+            checked={tasks?.waterComplete}
+            onChange={(checked) => handleTaskToggle("waterComplete", checked)}
+          />
+          
+          <TaskItem
+            icon={<Book className="h-5 w-5" />}
+            label="Read 10 Pages"
+            checked={tasks?.readingComplete}
+            onChange={(checked) => handleTaskToggle("readingComplete", checked)}
+          />
+          
+          <TaskItem
+            icon={<Apple className="h-5 w-5" />}
+            label="Follow Diet"
+            checked={tasks?.dietComplete}
+            onChange={(checked) => handleTaskToggle("dietComplete", checked)}
+          />
+          
+          <TaskItem
+            icon={<Camera className="h-5 w-5" />}
+            label="Progress Photo"
+            checked={tasks?.photoTaken}
+            onChange={(checked) => handleTaskToggle("photoTaken", checked)}
+          />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function TaskItem({ 
+  icon, 
+  label, 
+  checked, 
+  onChange 
+}: { 
+  icon: React.ReactNode;
+  label: string;
+  checked?: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
+        {icon}
+      </div>
+      <div className="flex-1">{label}</div>
+      <Checkbox 
+        checked={checked}
+        onCheckedChange={onChange}
+      />
+    </div>
+  );
+}
