@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { DailyTask } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,6 +24,21 @@ export function TaskList() {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/today"] });
     },
   });
+
+  useEffect(() => {
+    if (tasks) {
+      const completedTasks = [
+        tasks.workout1Complete,
+        tasks.workout2Complete,
+        tasks.waterComplete,
+        tasks.readingComplete,
+        tasks.dietComplete,
+        tasks.photoTaken,
+      ].filter(Boolean).length;
+
+      setProgress((completedTasks / 6) * 100);
+    }
+  }, [tasks]);
 
   const handleTaskToggle = (task: keyof DailyTask, checked: boolean) => {
     updateTaskMutation.mutate({ [task]: checked });

@@ -22,11 +22,13 @@ export function ProgressGallery() {
       <div className="grid grid-cols-3 gap-2">
         {photos.map((photo) => (
           <div key={photo.id} className="aspect-square relative">
-            <img
-              src={photo.photoUrl}
-              alt={`Progress photo from day ${photo.id}`}
-              className="object-cover rounded-lg w-full h-full"
-            />
+            {photo.photoUrl && (
+              <img
+                src={photo.photoUrl}
+                alt={`Progress photo from day ${photo.id}`}
+                className="object-cover rounded-lg w-full h-full"
+              />
+            )}
             <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 rounded-b-lg flex items-center justify-center">
               <Calendar className="h-3 w-3 mr-1" />
               {new Date(photo.date).toLocaleDateString()}
