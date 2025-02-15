@@ -1,7 +1,7 @@
 import { UserProgress } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
-import { Trophy, Star, Calendar, Flame, AlertTriangle, History, RotateCcw } from "lucide-react";
+import { Trophy, Star, Calendar, Flame, AlertTriangle, History, RotateCcw, Book } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { achievements as allAchievements } from "@shared/achievements";
 import { Button } from "@/components/ui/button";
@@ -65,15 +65,15 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
     },
     {
       icon: <Star className="h-5 w-5 text-purple-500" />,
-      label: "Total Photos",
-      value: progress.totalPhotos,
-      description: "Progress photos taken",
+      label: "Training Time",
+      value: `${progress.totalWorkouts} hrs`,
+      description: "Total workout hours",
     },
     {
-      icon: <Calendar className="h-5 w-5 text-green-500" />,
-      label: "Challenge Day",
-      value: progress.streakDays,
-      description: "Current streak",
+      icon: <Book className="h-5 w-5 text-green-500" />,
+      label: "Reading Progress",
+      value: `${Math.round(progress.totalReadingMinutes / 2)}`, //Corrected calculation
+      description: "Total pages read",
     },
   ];
 

@@ -16,38 +16,42 @@ export default function ProgressPage() {
 
   if (!progress) return null;
 
+  // Calculate more meaningful statistics
+  const workoutHours = progress.totalWorkouts; // Assuming 1 hour per workout
+  const pagesRead = Math.round(progress.totalReadingMinutes * 2); // Assuming 2 pages per minute
+  const waterLiters = Math.round(progress.totalWaterGallons * 3.78541); // Convert gallons to liters
+
   return (
     <div className="pb-20">
       <PageHeader title="Progress" />
 
       <div className="p-4 space-y-6">
-        {/* Force the component to render for debugging */}
         <ProgressComparison />
 
         <div className="grid grid-cols-2 gap-4">
           <StatsCard
             icon={<Trophy className="h-5 w-5 text-yellow-500" />}
-            label="Streak"
+            label="Current Streak"
             value={progress.streakDays}
             unit="days"
           />
           <StatsCard
             icon={<Dumbbell className="h-5 w-5 text-purple-500" />}
-            label="Workouts"
-            value={progress.totalWorkouts}
-            unit="completed"
+            label="Time Training"
+            value={workoutHours}
+            unit="hours"
           />
           <StatsCard
             icon={<Droplet className="h-5 w-5 text-blue-500" />}
-            label="Water"
-            value={progress.totalWaterGallons}
-            unit="gallons"
+            label="Water Consumed"
+            value={waterLiters}
+            unit="liters"
           />
           <StatsCard
             icon={<Book className="h-5 w-5 text-green-500" />}
-            label="Reading"
-            value={progress.totalReadingMinutes}
-            unit="minutes"
+            label="Pages Read"
+            value={pagesRead}
+            unit="pages"
           />
         </div>
 
@@ -79,7 +83,7 @@ function StatsCard({
         <div>
           <p className="text-sm text-gray-600">{label}</p>
           <p className="text-xl font-semibold">
-            {value} <span className="text-sm font-normal text-gray-500">{unit}</span>
+            {value.toLocaleString()} <span className="text-sm font-normal text-gray-500">{unit}</span>
           </p>
         </div>
       </div>
