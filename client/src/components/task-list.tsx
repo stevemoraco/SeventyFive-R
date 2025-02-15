@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { TaskCompletion, DayCompletion } from "./celebration-effects";
+import { useNotifications } from "@/hooks/use-notifications";
 
 export function TaskList() {
   const [progress, setProgress] = useState(0);
@@ -24,6 +25,7 @@ export function TaskList() {
   const { user } = useAuth();
   const is75Soft = user?.challengeType === "75soft";
   const isCustomChallenge = user?.challengeType === "custom";
+  const { requestPermission, scheduleTaskReminders } = useNotifications();
 
   const { data: tasks } = useQuery<DailyTask>({
     queryKey: ["/api/tasks/today"],
@@ -33,6 +35,10 @@ export function TaskList() {
   const activeCustomChallenge = isCustomChallenge && user.customChallenges
     ? (user.customChallenges as CustomChallenge[]).find(c => c.id === user.currentCustomChallengeId)
     : null;
+
+  useEffect(() => {
+    requestPermission();
+  }, [requestPermission]);
 
   useEffect(() => {
     if (tasks) {
@@ -86,6 +92,72 @@ export function TaskList() {
       }
     }
   }, [tasks, is75Soft, isCustomChallenge, activeCustomChallenge, user?.currentCustomChallengeId, completedToday]);
+
+  useEffect(() => {
+    if (!tasks) return;
+
+    // Get incomplete tasks
+    const incompleteTasks: string[] = [];
+
+    if (isCustomChallenge && activeCustomChallenge) {
+      // Check custom challenge tasks
+      if (activeCustomChallenge.workouts > 0 && !tasks.workout1Complete) {
+        incompleteTasks.push('First Workout');
+      }
+      if (activeCustomChallenge.workouts > 1 && !tasks.workout2Complete) {
+        incompleteTasks.push('Second Workout');
+      }
+      if (activeCustomChallenge.waterAmount > 0 && !tasks.waterComplete) {
+        incompleteTasks.push(`${activeCustomChallenge.waterAmount} Gallon(s) of Water`);
+      }
+      if (activeCustomChallenge.readingMinutes > 0 && !tasks.readingComplete) {
+        incompleteTasks.push(`${activeCustomChallenge.readingMinutes} Minutes of Reading`);
+      }
+      if (activeCustomChallenge.dietType !== 'none' && !tasks.dietComplete) {
+        incompleteTasks.push('Diet');
+      }
+      if (activeCustomChallenge.requirePhoto && !tasks.photoTaken) {
+        incompleteTasks.push('Progress Photo');
+      }
+      // Add custom tasks
+      const customTasksComplete = tasks.customTasksComplete as Record<string, boolean> || {};
+      activeCustomChallenge.customTasks.forEach(task => {
+        if (!customTasksComplete[task.id]) {
+          incompleteTasks.push(task.name);
+        }
+      });
+    } else {
+      // Check default tasks
+      if (!tasks.workout1Complete) {
+        incompleteTasks.push(is75Soft ? '45 Min Workout' : 'First Workout');
+      }
+      if (!is75Soft && !tasks.workout2Complete) {
+        incompleteTasks.push('Second Workout (Outdoor)');
+      }
+      if (!tasks.waterComplete) {
+        incompleteTasks.push('Water');
+      }
+      if (!tasks.readingComplete) {
+        incompleteTasks.push('Reading');
+      }
+      if (!tasks.dietComplete) {
+        incompleteTasks.push(is75Soft ? 'Diet Plan' : 'Strict Diet');
+      }
+      if (!is75Soft && !tasks.photoTaken) {
+        incompleteTasks.push('Progress Photo');
+      }
+    }
+
+    // Schedule reminders for incomplete tasks
+    scheduleTaskReminders(incompleteTasks);
+
+    // Check every 3 hours
+    const checkInterval = setInterval(() => {
+      scheduleTaskReminders(incompleteTasks);
+    }, 3 * 60 * 60 * 1000);
+
+    return () => clearInterval(checkInterval);
+  }, [tasks, is75Soft, isCustomChallenge, activeCustomChallenge, scheduleTaskReminders]);
 
   const updateTaskMutation = useMutation({
     mutationFn: async (taskUpdate: Partial<DailyTask>) => {
