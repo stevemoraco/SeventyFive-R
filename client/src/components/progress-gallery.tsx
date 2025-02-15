@@ -25,28 +25,28 @@ export function ProgressGallery() {
     );
   }
 
-  // Create a combined list of photos and notes, keeping them together by date
+  // Create a combined list of photos and notes
   const progressItems: ProgressItem[] = tasks.flatMap(task => {
     const items: ProgressItem[] = [];
 
-    // Add photo if exists
+    // Add photo entry if it exists
     if (task.photoUrl) {
       items.push({
         id: `photo-${task.id}`,
         date: task.date,
         type: 'photo',
-        content: '',
+        content: task.notes || '',
         photoUrl: task.photoUrl,
-        notes: task.notes || undefined
       });
     }
-    // Add note if exists and there's no photo (to avoid duplication)
-    else if (task.notes) {
+
+    // Add a separate note entry if there's a note without a photo
+    if (task.notes && !task.photoUrl) {
       items.push({
         id: `note-${task.id}`,
         date: task.date,
         type: 'note',
-        content: task.notes
+        content: task.notes,
       });
     }
 
@@ -84,9 +84,9 @@ export function ProgressGallery() {
                   </div>
                   <Camera className="h-3 w-3" />
                 </div>
-                {item.notes && (
+                {item.content && (
                   <div className="p-2 bg-background/95 border-t text-xs">
-                    <p className="line-clamp-2">{item.notes}</p>
+                    <p className="line-clamp-2">{item.content}</p>
                   </div>
                 )}
               </div>

@@ -160,16 +160,16 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
                 className={`p-4 ${
                   userAchievements[achievement.id]
                     ? "border-primary"
-                    : "opacity-50"
+                    : "opacity-75"
                 }`}
               >
                 <div className="flex items-center space-x-3">
                   <div className={`p-2 rounded-full ${
                     userAchievements[achievement.id]
                       ? "bg-primary/10 text-primary"
-                      : "bg-gray-100 dark:bg-gray-800"
+                      : "text-foreground"
                   }`}>
-                    {achievementIcons[achievement.id] || <Trophy className="h-5 w-5" />}
+                    {achievementIcons[achievement.id as keyof typeof achievementIcons] || <Trophy className="h-5 w-5" />}
                   </div>
                   <div>
                     <p className="font-medium">{achievement.name}</p>
