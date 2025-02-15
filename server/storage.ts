@@ -190,6 +190,8 @@ export class DatabaseStorage implements IStorage {
       const totalWorkouts = progress?.totalWorkouts || 0;
       const totalWaterGallons = progress?.totalWaterGallons || 0;
       const totalReadingMinutes = progress?.totalReadingMinutes || 0;
+      const perfectDays = progress?.perfectDays || 0;
+      const totalPhotos = progress?.totalPhotos || 0;
 
       // Calculate increments for today's tasks
       const workoutIncrement =
@@ -198,12 +200,25 @@ export class DatabaseStorage implements IStorage {
 
       const waterIncrement = tasks.waterComplete && !existingTasks?.waterComplete ? 1 : 0;
       const readingIncrement = tasks.readingComplete && !existingTasks?.readingComplete ? 10 : 0;
+      const photoIncrement = tasks.photoTaken && !existingTasks?.photoTaken ? 1 : 0;
+
+      // Check if all tasks are complete for perfect day counting
+      const isAllComplete = tasks.workout1Complete && 
+        (!this.requiresSecondWorkout(tasks) || tasks.workout2Complete) && 
+        tasks.waterComplete && 
+        tasks.readingComplete && 
+        tasks.dietComplete && 
+        (!this.requiresPhoto(tasks) || tasks.photoTaken);
+
+      const perfectDayIncrement = isAllComplete && !this.wasAlreadyPerfect(existingTasks) ? 1 : 0;
 
       await db.update(userProgress)
         .set({
           totalWorkouts: totalWorkouts + workoutIncrement,
           totalWaterGallons: totalWaterGallons + waterIncrement,
           totalReadingMinutes: totalReadingMinutes + readingIncrement,
+          perfectDays: perfectDays + perfectDayIncrement,
+          totalPhotos: totalPhotos + photoIncrement,
         })
         .where(eq(userProgress.userId, userId));
 
@@ -212,6 +227,8 @@ export class DatabaseStorage implements IStorage {
         totalWorkouts: totalWorkouts + workoutIncrement,
         totalWaterGallons: totalWaterGallons + waterIncrement,
         totalReadingMinutes: totalReadingMinutes + readingIncrement,
+        perfectDays: perfectDays + perfectDayIncrement,
+        totalPhotos: totalPhotos + photoIncrement,
       } as UserProgress);
       return;
     }
@@ -296,6 +313,26 @@ export class DatabaseStorage implements IStorage {
         achievements: userAchievements,
       });
     }
+  }
+
+  private requiresSecondWorkout(tasks: DailyTask): boolean {
+    // Check if the task requires a second workout based on challenge type
+    return true; // For now, always require second workout for 75 Hard
+  }
+
+  private requiresPhoto(tasks: DailyTask): boolean {
+    // Check if the task requires a photo based on challenge type
+    return true; // For now, always require photo for 75 Hard
+  }
+
+  private wasAlreadyPerfect(existingTasks: DailyTask | undefined): boolean {
+    if (!existingTasks) return false;
+    return existingTasks.workout1Complete && 
+           existingTasks.workout2Complete && 
+           existingTasks.waterComplete && 
+           existingTasks.readingComplete && 
+           existingTasks.dietComplete && 
+           existingTasks.photoTaken;
   }
 
   async getUserProgress(userId: number): Promise<UserProgress> {
