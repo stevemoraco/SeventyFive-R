@@ -63,35 +63,37 @@ export function ProgressGallery() {
       <h2 className="text-lg font-semibold">Progress Updates</h2>
       <div className="grid grid-cols-3 gap-4">
         {sortedItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden">
+          <Card key={item.id} className="overflow-hidden flex flex-col">
             {item.type === 'photo' ? (
-              <div className="relative flex flex-col">
-                <div className="aspect-square">
-                  <img
-                    src={item.photoUrl}
-                    alt={`Progress photo from ${item.date}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      img.src = '/placeholder-image.png';
-                    }}
-                  />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-2 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    {new Date(item.date).toLocaleDateString()}
+              <>
+                <div className="relative">
+                  <div className="aspect-square">
+                    <img
+                      src={item.photoUrl}
+                      alt={`Progress photo from ${item.date}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.src = '/placeholder-image.png';
+                      }}
+                    />
                   </div>
-                  <Camera className="h-3 w-3" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-2 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {new Date(item.date).toLocaleDateString()}
+                    </div>
+                    <Camera className="h-3 w-3" />
+                  </div>
                 </div>
                 {item.content && (
-                  <div className="p-3 border-t">
-                    <p className="text-sm whitespace-pre-wrap">{item.content}</p>
+                  <div className="p-3 border-t flex-1">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{item.content}</p>
                   </div>
                 )}
-              </div>
+              </>
             ) : (
-              <div className="p-4 h-full flex flex-col">
+              <div className="p-4 h-full">
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                   <div className="flex items-center">
                     <Calendar className="h-3 w-3 mr-1" />
@@ -99,7 +101,7 @@ export function ProgressGallery() {
                   </div>
                   <MessageSquare className="h-3 w-3" />
                 </div>
-                <p className="text-sm flex-1 whitespace-pre-wrap">{item.content}</p>
+                <p className="text-sm whitespace-pre-wrap">{item.content}</p>
               </div>
             )}
           </Card>
