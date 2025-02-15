@@ -19,6 +19,7 @@ export function TaskList() {
   const [lastClickPosition, setLastClickPosition] = useState({ x: 0, y: 0 });
   const [showTaskConfetti, setShowTaskConfetti] = useState(false);
   const [showDayCompletion, setShowDayCompletion] = useState(false);
+  const [completedToday, setCompletedToday] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const is75Soft = user?.challengeType === "75soft";
@@ -29,7 +30,7 @@ export function TaskList() {
   });
 
   // Get the active custom challenge if one is selected
-  const activeCustomChallenge = isCustomChallenge && user.customChallenges 
+  const activeCustomChallenge = isCustomChallenge && user.customChallenges
     ? (user.customChallenges as CustomChallenge[]).find(c => c.id === user.currentCustomChallengeId)
     : null;
 
@@ -76,12 +77,15 @@ export function TaskList() {
       const newProgress = (completedTasks / requiredTasks.length) * 100;
       setProgress(newProgress);
 
-      // Show day completion celebration if all tasks are complete
-      if (newProgress === 100 && !showDayCompletion) {
+      // Show day completion celebration if all tasks are complete and we haven't shown it yet today
+      if (newProgress === 100 && !completedToday) {
+        setCompletedToday(true);
         setShowDayCompletion(true);
+      } else if (newProgress < 100) {
+        setCompletedToday(false);
       }
     }
-  }, [tasks, is75Soft, isCustomChallenge, activeCustomChallenge, user?.currentCustomChallengeId, showDayCompletion]);
+  }, [tasks, is75Soft, isCustomChallenge, activeCustomChallenge, user?.currentCustomChallengeId, completedToday]);
 
   const updateTaskMutation = useMutation({
     mutationFn: async (taskUpdate: Partial<DailyTask>) => {
@@ -100,9 +104,9 @@ export function TaskList() {
       const element = event?.target?.closest('.task-item');
       if (element) {
         const rect = element.getBoundingClientRect();
-        setLastClickPosition({ 
+        setLastClickPosition({
           x: rect.x + rect.width / 2,
-          y: rect.y + rect.height / 2 
+          y: rect.y + rect.height / 2
         });
         setShowTaskConfetti(true);
         setTimeout(() => setShowTaskConfetti(false), 2000);
@@ -111,9 +115,9 @@ export function TaskList() {
 
     if (task.startsWith('custom_')) {
       // Handle custom task toggle
-      const customTasksComplete = { 
+      const customTasksComplete = {
         ...(tasks?.customTasksComplete as Record<string, boolean> || {}),
-        [task.replace('custom_', '')]: checked 
+        [task.replace('custom_', '')]: checked
       };
       updateTaskMutation.mutate({ customTasksComplete });
     } else {
