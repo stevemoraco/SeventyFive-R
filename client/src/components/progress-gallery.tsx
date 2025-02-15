@@ -61,11 +61,11 @@ export function ProgressGallery() {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Progress Updates</h2>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedItems.map((item) => (
           <Card key={item.id} className="overflow-hidden">
             {item.type === 'photo' ? (
-              <div className="relative">
+              <div className="relative flex flex-col">
                 <div className="aspect-square">
                   <img
                     src={item.photoUrl}
@@ -85,21 +85,21 @@ export function ProgressGallery() {
                   <Camera className="h-3 w-3" />
                 </div>
                 {item.content && (
-                  <div className="p-2 bg-background/95 border-t text-xs">
-                    <p className="line-clamp-2">{item.content}</p>
+                  <div className="p-3 border-t">
+                    <p className="text-sm whitespace-pre-wrap">{item.content}</p>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="p-3 space-y-2 h-full">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="p-4 h-full flex flex-col">
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                   <div className="flex items-center">
                     <Calendar className="h-3 w-3 mr-1" />
                     {new Date(item.date).toLocaleDateString()}
                   </div>
                   <MessageSquare className="h-3 w-3" />
                 </div>
-                <p className="text-sm">{item.content}</p>
+                <p className="text-sm flex-1 whitespace-pre-wrap">{item.content}</p>
               </div>
             )}
           </Card>
