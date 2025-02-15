@@ -94,17 +94,19 @@ export function TaskList() {
     },
   });
 
-  const handleTaskToggle = (task: keyof DailyTask | string, checked: boolean, event: React.MouseEvent) => {
-    // Save click position for confetti
-    const rect = event.currentTarget.getBoundingClientRect();
-    setLastClickPosition({ 
-      x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2 
-    });
-
+  const handleTaskToggle = (task: keyof DailyTask | string, checked: boolean, event: any) => {
     if (checked) {
-      setShowTaskConfetti(true);
-      setTimeout(() => setShowTaskConfetti(false), 2000);
+      // Only show confetti when checking a task
+      const element = event?.target?.closest('.task-item');
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        setLastClickPosition({ 
+          x: rect.x + rect.width / 2,
+          y: rect.y + rect.height / 2 
+        });
+        setShowTaskConfetti(true);
+        setTimeout(() => setShowTaskConfetti(false), 2000);
+      }
     }
 
     if (task.startsWith('custom_')) {
@@ -297,10 +299,10 @@ function TaskItem({
   label: string;
   description?: string;
   checked?: boolean;
-  onChange: (checked: boolean, event: React.MouseEvent) => void;
+  onChange: (checked: boolean, event: any) => void;
 }) {
   return (
-    <div className="flex items-center space-x-4">
+    <div className="flex items-center space-x-4 task-item">
       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
         {icon}
       </div>
@@ -312,7 +314,7 @@ function TaskItem({
       </div>
       <Checkbox
         checked={checked}
-        onCheckedChange={(checked, e) => onChange(checked as boolean, e as any)}
+        onCheckedChange={(checked, event) => onChange(checked as boolean, event)}
       />
     </div>
   );
