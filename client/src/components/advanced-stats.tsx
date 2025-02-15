@@ -1,7 +1,7 @@
 import { UserProgress } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
-import { Trophy, Star, Calendar, Flame, AlertTriangle, History, RotateCcw, Book } from "lucide-react";
+import { Trophy, Star, Calendar, Flame, AlertTriangle, History, RotateCcw, Book, Medal, Target, Award, Crown, Droplet, Camera } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { achievements as allAchievements } from "@shared/achievements";
 import { Button } from "@/components/ui/button";
@@ -98,6 +98,18 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
   const unlockedAchievements = Object.values(userAchievements).filter(Boolean).length;
   const achievementProgress = (unlockedAchievements / totalAchievements) * 100;
 
+  // Map achievement IDs to Lucide icons
+  const achievementIcons = {
+    streak_warrior: <Medal className="h-5 w-5" />,
+    perfect_week: <Crown className="h-5 w-5" />,
+    workout_master: <Target className="h-5 w-5" />,
+    hydration_hero: <Droplet className="h-5 w-5" />,
+    reading_champion: <Book className="h-5 w-5" />,
+    photo_dedication: <Camera className="h-5 w-5" />,
+    comeback_king: <Award className="h-5 w-5" />,
+    ultimate_warrior: <Trophy className="h-5 w-5" />
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -157,7 +169,7 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
                       ? "bg-primary/10 text-primary"
                       : "bg-gray-100 dark:bg-gray-800"
                   }`}>
-                    {achievement.icon}
+                    {achievementIcons[achievement.id] || <Trophy className="h-5 w-5" />}
                   </div>
                   <div>
                     <p className="font-medium">{achievement.name}</p>

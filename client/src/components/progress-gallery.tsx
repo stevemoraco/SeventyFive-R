@@ -9,6 +9,7 @@ type ProgressItem = {
   type: 'photo' | 'note';
   content: string;
   photoUrl?: string;
+  notes?: string;
 };
 
 export function ProgressGallery() {
@@ -24,7 +25,7 @@ export function ProgressGallery() {
     );
   }
 
-  // Create a combined list of photos and notes
+  // Create a combined list of photos and notes, keeping them together by date
   const progressItems: ProgressItem[] = tasks.flatMap(task => {
     const items: ProgressItem[] = [];
 
@@ -36,16 +37,16 @@ export function ProgressGallery() {
         type: 'photo',
         content: '',
         photoUrl: task.photoUrl,
+        notes: task.notes || undefined
       });
     }
-
-    // Add note if exists
-    if (task.notes) {
+    // Add note if exists and there's no photo (to avoid duplication)
+    else if (task.notes) {
       items.push({
         id: `note-${task.id}`,
         date: task.date,
         type: 'note',
-        content: task.notes,
+        content: task.notes
       });
     }
 
@@ -83,9 +84,14 @@ export function ProgressGallery() {
                   </div>
                   <Camera className="h-3 w-3" />
                 </div>
+                {item.notes && (
+                  <div className="p-2 bg-background/95 border-t text-xs">
+                    <p className="line-clamp-2">{item.notes}</p>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="p-3 space-y-2">
+              <div className="p-3 space-y-2 h-full">
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <Calendar className="h-3 w-3 mr-1" />
