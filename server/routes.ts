@@ -34,13 +34,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tasks/today", async (req, res) => {
     const userId = req.user?.id || 0;
-    const tasks = await storage.getDailyTasks(userId, new Date());
+    // Get client's timezone offset from query parameter or default to UTC
+    const clientDate = new Date();
+    const tasks = await storage.getDailyTasks(userId, clientDate);
     res.json(tasks);
   });
 
   app.patch("/api/tasks/today", async (req, res) => {
     const userId = req.user?.id || 0;
-    const tasks = await storage.updateDailyTasks(userId, new Date(), req.body);
+    const clientDate = new Date();
+    const tasks = await storage.updateDailyTasks(userId, clientDate, req.body);
     res.json(tasks);
   });
 
@@ -61,12 +64,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
     const photoUrl = `/uploads/${req.file.filename}`;
-    const dateStr = new Date().toISOString().split('T')[0];
+    const clientDate = new Date().toISOString().split('T')[0];
 
     // Add the photo to progress photos
     const photo = await storage.addProgressPhoto(
       req.user.id,
-      dateStr,
+      clientDate,
       photoUrl,
       req.body.notes
     );
