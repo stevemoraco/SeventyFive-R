@@ -81,7 +81,7 @@ export function TaskList() {
         setShowDayCompletion(true);
       }
     }
-  }, [tasks, is75Soft, isCustomChallenge, activeCustomChallenge, user?.currentCustomChallengeId]);
+  }, [tasks, is75Soft, isCustomChallenge, activeCustomChallenge, user?.currentCustomChallengeId, showDayCompletion]);
 
   const updateTaskMutation = useMutation({
     mutationFn: async (taskUpdate: Partial<DailyTask>) => {
@@ -184,14 +184,14 @@ export function TaskList() {
               )}
               {activeCustomChallenge.requirePhoto && (
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4 task-item">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
                       <Camera className="h-5 w-5" />
                     </div>
                     <div className="flex-1">Progress Photo</div>
                     <Checkbox
                       checked={tasks?.photoTaken}
-                      onCheckedChange={(checked, e) => handleTaskToggle("photoTaken", checked as boolean, e)}
+                      onCheckedChange={(checked) => handleTaskToggle("photoTaken", checked as boolean, { target: { closest: (sel: string) => document.querySelector(sel) } })}
                     />
                   </div>
                   <PhotoUpload />
@@ -251,14 +251,14 @@ export function TaskList() {
 
               {!is75Soft && (
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4 task-item">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
                       <Camera className="h-5 w-5" />
                     </div>
                     <div className="flex-1">Progress Photo</div>
                     <Checkbox
                       checked={tasks?.photoTaken}
-                      onCheckedChange={(checked, e) => handleTaskToggle("photoTaken", checked as boolean, e)}
+                      onCheckedChange={(checked) => handleTaskToggle("photoTaken", checked as boolean, { target: { closest: (sel: string) => document.querySelector(sel) } })}
                     />
                   </div>
                   <PhotoUpload />
@@ -314,7 +314,7 @@ function TaskItem({
       </div>
       <Checkbox
         checked={checked}
-        onCheckedChange={(checked, event) => onChange(checked as boolean, event)}
+        onCheckedChange={(checked) => onChange(checked as boolean, { target: { closest: (sel: string) => document.querySelector(sel) } })}
       />
     </div>
   );

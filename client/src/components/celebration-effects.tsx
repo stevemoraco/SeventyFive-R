@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import ReactConfetti from "react-confetti";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Trophy } from "lucide-react";
 
 interface TaskCompletionProps {
@@ -62,13 +62,18 @@ export function DayCompletion({ open, onOpenChange }: DayCompletionProps) {
       )}
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md text-center">
-          <div className="flex flex-col items-center space-y-4 py-8">
+          <DialogHeader>
+            <DialogTitle>Day Complete!</DialogTitle>
+            <DialogDescription>
+              Congratulations! You've completed all your tasks for today.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center space-y-4 py-6">
             <div className="p-3 bg-primary/10 rounded-full">
               <Trophy className="h-8 w-8 text-primary" />
             </div>
-            <h2 className="text-2xl font-semibold">Day Complete!</h2>
             <p className="text-muted-foreground">
-              Congratulations! You've completed all your tasks for today. Keep up the great work!
+              Keep up the great work! Every day completed brings you closer to your goals.
             </p>
           </div>
         </DialogContent>
