@@ -153,22 +153,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(dailyTasks.id, tasks.id))
       .returning();
 
-    // Calculate progress updates
-    const workoutIncrement = 
-      (updates.workout1Complete && !tasks.workout1Complete ? 1 : 0) +
-      (updates.workout2Complete && !tasks.workout2Complete ? 1 : 0);
+    // Calculate progress updates (handling both increments and decrements)
+    const workoutChange = 
+      (updates.workout1Complete !== undefined ? (updates.workout1Complete ? 1 : -1) : 0) +
+      (updates.workout2Complete !== undefined ? (updates.workout2Complete ? 1 : -1) : 0);
 
-    const waterIncrement = updates.waterComplete && !tasks.waterComplete ? 1 : 0;
-    const readingIncrement = updates.readingComplete && !tasks.readingComplete ? 10 : 0;
-    const photoIncrement = updates.photoTaken && !tasks.photoTaken ? 1 : 0;
+    const waterChange = updates.waterComplete !== undefined ? (updates.waterComplete ? 1 : -1) : 0;
+    const readingChange = updates.readingComplete !== undefined ? (updates.readingComplete ? 10 : -10) : 0;
+    const photoChange = updates.photoTaken !== undefined ? (updates.photoTaken ? 1 : -1) : 0;
 
-    // Update progress
+    // Update progress (ensuring we don't go below 0)
     await db.update(userProgress)
       .set({
-        totalWorkouts: (oldProgress?.totalWorkouts || 0) + workoutIncrement,
-        totalWaterGallons: (oldProgress?.totalWaterGallons || 0) + waterIncrement,
-        totalReadingMinutes: (oldProgress?.totalReadingMinutes || 0) + readingIncrement,
-        totalPhotos: (oldProgress?.totalPhotos || 0) + photoIncrement,
+        totalWorkouts: Math.max(0, (oldProgress?.totalWorkouts || 0) + workoutChange),
+        totalWaterGallons: Math.max(0, (oldProgress?.totalWaterGallons || 0) + waterChange),
+        totalReadingMinutes: Math.max(0, (oldProgress?.totalReadingMinutes || 0) + readingChange),
+        totalPhotos: Math.max(0, (oldProgress?.totalPhotos || 0) + photoChange),
       })
       .where(eq(userProgress.userId, userId));
 

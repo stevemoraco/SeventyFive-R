@@ -72,7 +72,7 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
     {
       icon: <Book className="h-5 w-5 text-green-500" />,
       label: "Reading Progress",
-      value: `${Math.round(progress.totalReadingMinutes / 2)}`, //Corrected calculation
+      value: `${Math.round(progress.totalReadingMinutes / 2)}`,
       description: "Total pages read",
     },
   ];
