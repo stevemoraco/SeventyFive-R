@@ -11,10 +11,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { TaskCompletion, DayCompletion } from "./celebration-effects";
 
 export function TaskList() {
   const [progress, setProgress] = useState(0);
   const [notes, setNotes] = useState("");
+  const [lastClickPosition, setLastClickPosition] = useState({ x: 0, y: 0 });
+  const [showTaskConfetti, setShowTaskConfetti] = useState(false);
+  const [showDayCompletion, setShowDayCompletion] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const is75Soft = user?.challengeType === "75soft";
@@ -69,7 +73,13 @@ export function TaskList() {
       }
 
       const completedTasks = requiredTasks.filter(Boolean).length;
-      setProgress((completedTasks / requiredTasks.length) * 100);
+      const newProgress = (completedTasks / requiredTasks.length) * 100;
+      setProgress(newProgress);
+
+      // Show day completion celebration if all tasks are complete
+      if (newProgress === 100 && !showDayCompletion) {
+        setShowDayCompletion(true);
+      }
     }
   }, [tasks, is75Soft, isCustomChallenge, activeCustomChallenge, user?.currentCustomChallengeId]);
 
@@ -80,10 +90,23 @@ export function TaskList() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks/today"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/progress"] });
     },
   });
 
-  const handleTaskToggle = (task: keyof DailyTask | string, checked: boolean) => {
+  const handleTaskToggle = (task: keyof DailyTask | string, checked: boolean, event: React.MouseEvent) => {
+    // Save click position for confetti
+    const rect = event.currentTarget.getBoundingClientRect();
+    setLastClickPosition({ 
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height / 2 
+    });
+
+    if (checked) {
+      setShowTaskConfetti(true);
+      setTimeout(() => setShowTaskConfetti(false), 2000);
+    }
+
     if (task.startsWith('custom_')) {
       // Handle custom task toggle
       const customTasksComplete = { 
@@ -109,6 +132,9 @@ export function TaskList() {
     <div className="space-y-4 p-4">
       <Progress value={progress} className="w-full h-2" />
 
+      {showTaskConfetti && <TaskCompletion x={lastClickPosition.x} y={lastClickPosition.y} />}
+      <DayCompletion open={showDayCompletion} onOpenChange={setShowDayCompletion} />
+
       <Card className="p-4">
         <div className="space-y-4">
           {isCustomChallenge && activeCustomChallenge ? (
@@ -119,7 +145,7 @@ export function TaskList() {
                   icon={<Dumbbell className="h-5 w-5" />}
                   label={`Workout ${activeCustomChallenge.outdoorWorkout ? '(Outdoor)' : ''}`}
                   checked={tasks?.workout1Complete}
-                  onChange={(checked) => handleTaskToggle("workout1Complete", checked)}
+                  onChange={(checked, e) => handleTaskToggle("workout1Complete", checked, e)}
                 />
               )}
               {activeCustomChallenge.workouts > 1 && (
@@ -127,7 +153,7 @@ export function TaskList() {
                   icon={<Dumbbell className="h-5 w-5" />}
                   label="Second Workout"
                   checked={tasks?.workout2Complete}
-                  onChange={(checked) => handleTaskToggle("workout2Complete", checked)}
+                  onChange={(checked, e) => handleTaskToggle("workout2Complete", checked, e)}
                 />
               )}
               {activeCustomChallenge.waterAmount > 0 && (
@@ -135,7 +161,7 @@ export function TaskList() {
                   icon={<Droplet className="h-5 w-5" />}
                   label={`Drink ${activeCustomChallenge.waterAmount} Gallon(s) of Water`}
                   checked={tasks?.waterComplete}
-                  onChange={(checked) => handleTaskToggle("waterComplete", checked)}
+                  onChange={(checked, e) => handleTaskToggle("waterComplete", checked, e)}
                 />
               )}
               {activeCustomChallenge.readingMinutes > 0 && (
@@ -143,7 +169,7 @@ export function TaskList() {
                   icon={<Book className="h-5 w-5" />}
                   label={`Read for ${activeCustomChallenge.readingMinutes} Minutes`}
                   checked={tasks?.readingComplete}
-                  onChange={(checked) => handleTaskToggle("readingComplete", checked)}
+                  onChange={(checked, e) => handleTaskToggle("readingComplete", checked, e)}
                 />
               )}
               {activeCustomChallenge.dietType !== 'none' && (
@@ -151,7 +177,7 @@ export function TaskList() {
                   icon={<Apple className="h-5 w-5" />}
                   label={`Follow ${activeCustomChallenge.dietType === 'strict' ? 'Strict' : 'Flexible'} Diet`}
                   checked={tasks?.dietComplete}
-                  onChange={(checked) => handleTaskToggle("dietComplete", checked)}
+                  onChange={(checked, e) => handleTaskToggle("dietComplete", checked, e)}
                 />
               )}
               {activeCustomChallenge.requirePhoto && (
@@ -163,7 +189,7 @@ export function TaskList() {
                     <div className="flex-1">Progress Photo</div>
                     <Checkbox
                       checked={tasks?.photoTaken}
-                      onCheckedChange={(checked) => handleTaskToggle("photoTaken", checked as boolean)}
+                      onCheckedChange={(checked, e) => handleTaskToggle("photoTaken", checked as boolean, e)}
                     />
                   </div>
                   <PhotoUpload />
@@ -177,7 +203,7 @@ export function TaskList() {
                   label={task.name}
                   description={task.description}
                   checked={(tasks?.customTasksComplete as Record<string, boolean>)?.[task.id] || false}
-                  onChange={(checked) => handleTaskToggle(`custom_${task.id}`, checked)}
+                  onChange={(checked, e) => handleTaskToggle(`custom_${task.id}`, checked, e)}
                 />
               ))}
             </>
@@ -188,7 +214,7 @@ export function TaskList() {
                 icon={<Dumbbell className="h-5 w-5" />}
                 label={is75Soft ? "45 Min Workout" : "First Workout"}
                 checked={tasks?.workout1Complete}
-                onChange={(checked) => handleTaskToggle("workout1Complete", checked)}
+                onChange={(checked, e) => handleTaskToggle("workout1Complete", checked, e)}
               />
 
               {!is75Soft && (
@@ -196,7 +222,7 @@ export function TaskList() {
                   icon={<Dumbbell className="h-5 w-5" />}
                   label="Second Workout (Outdoor)"
                   checked={tasks?.workout2Complete}
-                  onChange={(checked) => handleTaskToggle("workout2Complete", checked)}
+                  onChange={(checked, e) => handleTaskToggle("workout2Complete", checked, e)}
                 />
               )}
 
@@ -204,21 +230,21 @@ export function TaskList() {
                 icon={<Droplet className="h-5 w-5" />}
                 label="Drink Water"
                 checked={tasks?.waterComplete}
-                onChange={(checked) => handleTaskToggle("waterComplete", checked)}
+                onChange={(checked, e) => handleTaskToggle("waterComplete", checked, e)}
               />
 
               <TaskItem
                 icon={<Book className="h-5 w-5" />}
                 label="Read 10 Pages"
                 checked={tasks?.readingComplete}
-                onChange={(checked) => handleTaskToggle("readingComplete", checked)}
+                onChange={(checked, e) => handleTaskToggle("readingComplete", checked, e)}
               />
 
               <TaskItem
                 icon={<Apple className="h-5 w-5" />}
                 label={is75Soft ? "Follow Diet Plan" : "Follow Strict Diet"}
                 checked={tasks?.dietComplete}
-                onChange={(checked) => handleTaskToggle("dietComplete", checked)}
+                onChange={(checked, e) => handleTaskToggle("dietComplete", checked, e)}
               />
 
               {!is75Soft && (
@@ -230,7 +256,7 @@ export function TaskList() {
                     <div className="flex-1">Progress Photo</div>
                     <Checkbox
                       checked={tasks?.photoTaken}
-                      onCheckedChange={(checked) => handleTaskToggle("photoTaken", checked as boolean)}
+                      onCheckedChange={(checked, e) => handleTaskToggle("photoTaken", checked as boolean, e)}
                     />
                   </div>
                   <PhotoUpload />
@@ -271,7 +297,7 @@ function TaskItem({
   label: string;
   description?: string;
   checked?: boolean;
-  onChange: (checked: boolean) => void;
+  onChange: (checked: boolean, event: React.MouseEvent) => void;
 }) {
   return (
     <div className="flex items-center space-x-4">
@@ -286,7 +312,7 @@ function TaskItem({
       </div>
       <Checkbox
         checked={checked}
-        onCheckedChange={onChange}
+        onCheckedChange={(checked, e) => onChange(checked as boolean, e as any)}
       />
     </div>
   );
