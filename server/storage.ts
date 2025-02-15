@@ -137,44 +137,101 @@ export class DatabaseStorage implements IStorage {
     return updatedTasks;
   }
 
-  private async updateProgress(userId: number, updates: Partial<UserProgress>): Promise<void> {
+  private async updateProgress(userId: number, updates: Partial<UserProgress> | DailyTask): Promise<void> {
     const [progress] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
 
+    // Handle reset case
+    if ('stats' in updates && Object.keys(updates.stats || {}).length === 0) {
+      await db.update(userProgress)
+        .set({
+          ...updates,
+          perfectDays: 0,
+          totalWorkouts: 0,
+          totalWaterGallons: 0,
+          totalReadingMinutes: 0,
+          streakDays: 0,
+          totalPhotos: 0,
+          totalRestarts: 0,
+          daysLost: 0,
+          previousStreaks: [],
+          lastRestartDate: null,
+          longestStreak: 0,
+        })
+        .where(eq(userProgress.userId, userId));
+      return;
+    }
+
+    // Handle daily task updates
+    if ('date' in updates) {
+      const tasks = updates as DailyTask;
+      const dateStr = tasks.date;
+      const currentDate = new Date(dateStr);
+
+      // Get all tasks from the previous day
+      const previousDay = new Date(currentDate);
+      previousDay.setDate(previousDay.getDate() - 1);
+      const [previousDayTasks] = await db.select()
+        .from(dailyTasks)
+        .where(and(
+          eq(dailyTasks.userId, userId),
+          eq(dailyTasks.date, previousDay.toISOString().split('T')[0])
+        ));
+
+      // Get existing tasks for today to prevent duplicate counting
+      const [existingTasks] = await db.select()
+        .from(dailyTasks)
+        .where(and(
+          eq(dailyTasks.userId, userId),
+          eq(dailyTasks.date, dateStr)
+        ));
+
+      // Calculate current progress
+      const streakDays = progress?.streakDays || 0;
+      const totalWorkouts = progress?.totalWorkouts || 0;
+      const totalWaterGallons = progress?.totalWaterGallons || 0;
+      const totalReadingMinutes = progress?.totalReadingMinutes || 0;
+
+      // Calculate increments for today's tasks
+      const workoutIncrement =
+        (tasks.workout1Complete && !existingTasks?.workout1Complete ? 1 : 0) +
+        (tasks.workout2Complete && !existingTasks?.workout2Complete ? 1 : 0);
+
+      const waterIncrement = tasks.waterComplete && !existingTasks?.waterComplete ? 1 : 0;
+      const readingIncrement = tasks.readingComplete && !existingTasks?.readingComplete ? 10 : 0;
+
+      await db.update(userProgress)
+        .set({
+          totalWorkouts: totalWorkouts + workoutIncrement,
+          totalWaterGallons: totalWaterGallons + waterIncrement,
+          totalReadingMinutes: totalReadingMinutes + readingIncrement,
+        })
+        .where(eq(userProgress.userId, userId));
+
+      await this.checkAndUpdateAchievements(userId, {
+        ...progress,
+        totalWorkouts: totalWorkouts + workoutIncrement,
+        totalWaterGallons: totalWaterGallons + waterIncrement,
+        totalReadingMinutes: totalReadingMinutes + readingIncrement,
+      } as UserProgress);
+      return;
+    }
+
+    // Handle other progress updates
     if (!progress) {
       await db.insert(userProgress).values({
         userId,
         ...updates,
-        stats: updates.stats || {},
       });
     } else {
       await db.update(userProgress)
-        .set({
-          ...updates,
-          // Ensure all fields are properly reset when stats is being reset
-          ...(updates.stats === {} ? {
-            perfectDays: 0,
-            totalWorkouts: 0,
-            totalWaterGallons: 0,
-            totalReadingMinutes: 0,
-            streakDays: 0,
-            totalPhotos: 0,
-            totalRestarts: 0,
-            daysLost: 0,
-            previousStreaks: [],
-            lastRestartDate: null,
-            longestStreak: 0,
-          } : {}),
-        })
+        .set(updates)
         .where(eq(userProgress.userId, userId));
     }
 
-    // Only check achievements if we're not resetting
-    if (!updates.hasOwnProperty('stats')) {
-      await this.checkAndUpdateAchievements(userId, {
-        ...progress,
-        ...updates,
-      } as UserProgress);
-    }
+    await this.checkAndUpdateAchievements(userId, {
+      ...progress,
+      ...updates,
+    } as UserProgress);
   }
 
   private async checkAndUpdateAchievements(userId: number, progress: UserProgress) {
