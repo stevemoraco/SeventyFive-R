@@ -12,8 +12,13 @@ export function ProgressComparison() {
     enabled: !!user, // Only fetch if user is logged in
   });
 
-  // Don't render anything if user is not logged in or has no photos
-  if (!user || !photos || photos.length === 0) {
+  // Don't render anything if user is not logged in or no photos data
+  if (!user || !photos) {
+    return null;
+  }
+
+  // Don't render if there are no photos
+  if (photos.length === 0) {
     return null;
   }
 
@@ -62,7 +67,7 @@ export function ProgressComparison() {
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   const img = e.target as HTMLImageElement;
-                  img.src = '/placeholder-image.png'; // Add a placeholder image
+                  img.src = '/placeholder-image.png';
                 }}
               />
             </div>
@@ -76,7 +81,7 @@ export function ProgressComparison() {
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   const img = e.target as HTMLImageElement;
-                  img.src = '/placeholder-image.png'; // Add a placeholder image
+                  img.src = '/placeholder-image.png';
                 }}
               />
             </div>
