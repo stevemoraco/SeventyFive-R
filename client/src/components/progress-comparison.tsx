@@ -17,8 +17,9 @@ export function ProgressComparison() {
     return null;
   }
 
-  const firstPhoto = photos[0];
-  const latestPhoto = photos[photos.length - 1];
+  // Since photos are in reverse chronological order, we need to swap the indices
+  const firstPhoto = photos[photos.length - 1]; // Earliest photo (Day 1)
+  const latestPhoto = photos[0]; // Most recent photo
 
   // Only show if we have different photos
   if (!firstPhoto?.photoUrl || !latestPhoto?.photoUrl || firstPhoto.id === latestPhoto.id) {
@@ -55,7 +56,6 @@ export function ProgressComparison() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-              {/* Add error handling for image loading */}
               <img
                 src={firstPhoto.photoUrl}
                 alt="Day 1"
