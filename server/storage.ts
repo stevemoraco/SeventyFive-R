@@ -49,6 +49,23 @@ export class DatabaseStorage implements IStorage {
       startDate: new Date().toISOString(),
       currentDay: 1,
     }).returning();
+
+    // Create initial progress record
+    await db.insert(userProgress).values({
+      userId: user.id,
+      totalWorkouts: 0,
+      totalWaterGallons: 0,
+      totalReadingMinutes: 0,
+      streakDays: 0,
+      stats: {},
+      perfectDays: 0,
+      longestStreak: 0,
+      totalPhotos: 0,
+      totalRestarts: 0,
+      daysLost: 0,
+      previousStreaks: [],
+    });
+
     return user;
   }
 
@@ -128,12 +145,33 @@ export class DatabaseStorage implements IStorage {
     const dateStr = date.toISOString().split('T')[0];
     let tasks = await this.getDailyTasks(userId, date);
 
+    // Get existing progress before update
+    const [oldProgress] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
+
     const [updatedTasks] = await db.update(dailyTasks)
       .set(updates)
       .where(eq(dailyTasks.id, tasks.id))
       .returning();
 
-    await this.updateProgress(userId, updatedTasks);
+    // Calculate progress updates
+    const workoutIncrement = 
+      (updates.workout1Complete && !tasks.workout1Complete ? 1 : 0) +
+      (updates.workout2Complete && !tasks.workout2Complete ? 1 : 0);
+
+    const waterIncrement = updates.waterComplete && !tasks.waterComplete ? 1 : 0;
+    const readingIncrement = updates.readingComplete && !tasks.readingComplete ? 10 : 0;
+    const photoIncrement = updates.photoTaken && !tasks.photoTaken ? 1 : 0;
+
+    // Update progress
+    await db.update(userProgress)
+      .set({
+        totalWorkouts: (oldProgress?.totalWorkouts || 0) + workoutIncrement,
+        totalWaterGallons: (oldProgress?.totalWaterGallons || 0) + waterIncrement,
+        totalReadingMinutes: (oldProgress?.totalReadingMinutes || 0) + readingIncrement,
+        totalPhotos: (oldProgress?.totalPhotos || 0) + photoIncrement,
+      })
+      .where(eq(userProgress.userId, userId));
+
     return updatedTasks;
   }
 
@@ -203,11 +241,11 @@ export class DatabaseStorage implements IStorage {
       const photoIncrement = tasks.photoTaken && !existingTasks?.photoTaken ? 1 : 0;
 
       // Check if all tasks are complete for perfect day counting
-      const isAllComplete = tasks.workout1Complete && 
-        (!this.requiresSecondWorkout(tasks) || tasks.workout2Complete) && 
-        tasks.waterComplete && 
-        tasks.readingComplete && 
-        tasks.dietComplete && 
+      const isAllComplete = tasks.workout1Complete &&
+        (!this.requiresSecondWorkout(tasks) || tasks.workout2Complete) &&
+        tasks.waterComplete &&
+        tasks.readingComplete &&
+        tasks.dietComplete &&
         (!this.requiresPhoto(tasks) || tasks.photoTaken);
 
       const perfectDayIncrement = isAllComplete && !this.wasAlreadyPerfect(existingTasks) ? 1 : 0;
@@ -327,12 +365,12 @@ export class DatabaseStorage implements IStorage {
 
   private wasAlreadyPerfect(existingTasks: DailyTask | undefined): boolean {
     if (!existingTasks) return false;
-    return existingTasks.workout1Complete && 
-           existingTasks.workout2Complete && 
-           existingTasks.waterComplete && 
-           existingTasks.readingComplete && 
-           existingTasks.dietComplete && 
-           existingTasks.photoTaken;
+    return existingTasks.workout1Complete &&
+      existingTasks.workout2Complete &&
+      existingTasks.waterComplete &&
+      existingTasks.readingComplete &&
+      existingTasks.dietComplete &&
+      existingTasks.photoTaken;
   }
 
   async getUserProgress(userId: number): Promise<UserProgress> {
