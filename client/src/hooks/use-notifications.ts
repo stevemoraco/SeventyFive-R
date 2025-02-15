@@ -14,16 +14,19 @@ export function useNotifications() {
       return false;
     }
 
-    if (Notification.permission === 'granted') {
-      return true;
-    }
-
-    if (Notification.permission !== 'denied') {
+    // Always request permission unless already granted
+    if (Notification.permission !== 'granted') {
       const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        toast({
+          title: "Notifications enabled",
+          description: "You'll receive reminders for incomplete tasks",
+        });
+      }
       return permission === 'granted';
     }
 
-    return false;
+    return true;
   }, [toast]);
 
   const scheduleNotification = useCallback((title: string, options?: NotificationOptions) => {
@@ -52,7 +55,6 @@ export function useNotifications() {
         {
           body: `You still need to complete: ${incompleteTasks.join(', ')}`,
           tag: 'task-reminder', // Prevents duplicate notifications
-          renotify: true, // Allows the same notification to be shown again
         }
       );
     }

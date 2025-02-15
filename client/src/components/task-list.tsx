@@ -37,8 +37,18 @@ export function TaskList() {
     : null;
 
   useEffect(() => {
-    requestPermission();
-  }, [requestPermission]);
+    // Request notification permission immediately when component mounts
+    const setupNotifications = async () => {
+      const granted = await requestPermission();
+      if (granted) {
+        toast({
+          title: "Reminders enabled",
+          description: "You'll receive notifications for incomplete tasks throughout the day.",
+        });
+      }
+    };
+    setupNotifications();
+  }, [requestPermission, toast]);
 
   useEffect(() => {
     if (tasks) {
