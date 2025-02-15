@@ -72,7 +72,7 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
     {
       icon: <Book className="h-5 w-5 text-green-500" />,
       label: "Reading Progress",
-      value: `${Math.round(progress.totalReadingMinutes / 2)}`,
+      value: `${progress.totalReadingMinutes}`,
       description: "Total pages read",
     },
   ];
@@ -136,6 +136,37 @@ export function AdvancedStats({ progress }: AdvancedStatsProps) {
               </div>
             </Card>
           ))}
+        </div>
+
+        {/* List of all achievements */}
+        <div className="mt-6 space-y-4">
+          <h3 className="text-lg font-semibold">Available Achievements</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {allAchievements.map((achievement) => (
+              <Card
+                key={achievement.id}
+                className={`p-4 ${
+                  userAchievements[achievement.id]
+                    ? "border-primary"
+                    : "opacity-50"
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-full ${
+                    userAchievements[achievement.id]
+                      ? "bg-primary/10 text-primary"
+                      : "bg-gray-100 dark:bg-gray-800"
+                  }`}>
+                    {achievement.icon}
+                  </div>
+                  <div>
+                    <p className="font-medium">{achievement.name}</p>
+                    <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
 
