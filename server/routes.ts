@@ -203,11 +203,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Reset progress stats related to achievements
     await storage.updateProgress(req.user.id, {
       perfectDays: 0,
+      totalWorkouts: 0,
+      totalWaterGallons: 0,
+      totalReadingMinutes: 0,
+      streakDays: 0,
       totalPhotos: 0,
       totalRestarts: 0,
       daysLost: 0,
       previousStreaks: [],
       lastRestartDate: null,
+      stats: {},
+      longestStreak: 0,
     });
 
     res.json(user);

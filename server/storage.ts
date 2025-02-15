@@ -149,13 +149,16 @@ export class DatabaseStorage implements IStorage {
     } else {
       await db.update(userProgress)
         .set(updates)
-        .where(eq(userProgress.id, progress.id));
+        .where(eq(userProgress.userId, userId));
     }
 
-    await this.checkAndUpdateAchievements(userId, {
-      ...progress,
-      ...updates,
-    } as UserProgress);
+    // Only check achievements if we're not resetting
+    if (!updates.hasOwnProperty('stats')) {
+      await this.checkAndUpdateAchievements(userId, {
+        ...progress,
+        ...updates,
+      } as UserProgress);
+    }
   }
 
   private async checkAndUpdateAchievements(userId: number, progress: UserProgress) {
@@ -173,8 +176,10 @@ export class DatabaseStorage implements IStorage {
       let requirement = achievement.requirement;
       let achieved = false;
 
+      // Only check achievements if the required stats are present
       switch (requirement.type) {
         case 'streak':
+          if (progress.streakDays === undefined) return;
           if (achievement.id === 'comeback_king') {
             achieved = progress.streakDays >= requirement.count && progress.totalRestarts > 0;
           } else if (achievement.id === 'perseverance_master') {
@@ -186,18 +191,23 @@ export class DatabaseStorage implements IStorage {
           }
           break;
         case 'perfectDays':
+          if (progress.perfectDays === undefined) return;
           achieved = progress.perfectDays >= requirement.count;
           break;
         case 'workouts':
+          if (progress.totalWorkouts === undefined) return;
           achieved = progress.totalWorkouts >= requirement.count;
           break;
         case 'water':
+          if (progress.totalWaterGallons === undefined) return;
           achieved = progress.totalWaterGallons >= requirement.count;
           break;
         case 'reading':
+          if (progress.totalReadingMinutes === undefined) return;
           achieved = progress.totalReadingMinutes >= requirement.count;
           break;
         case 'photos':
+          if (progress.totalPhotos === undefined) return;
           achieved = progress.totalPhotos >= requirement.count;
           break;
       }
