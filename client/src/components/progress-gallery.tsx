@@ -56,7 +56,7 @@ export function ProgressGallery() {
   // Sort items by date in ascending order (oldest first)
   const sortedItems = progressItems.sort((a, b) => 
     new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  ).reverse(); // Reverse to show earliest first
 
   return (
     <div className="space-y-4">
@@ -81,7 +81,7 @@ export function ProgressGallery() {
                   <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-2 flex items-center justify-between">
                     <div className="flex items-center">
                       <Calendar className="h-3 w-3 mr-1" />
-                      Day {index + 1} - {new Date(item.date).toLocaleDateString()}
+                      Day {sortedItems.length - index} - {new Date(item.date).toLocaleDateString()}
                     </div>
                     <Camera className="h-3 w-3" />
                   </div>
@@ -97,7 +97,7 @@ export function ProgressGallery() {
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                   <div className="flex items-center">
                     <Calendar className="h-3 w-3 mr-1" />
-                    Day {index + 1} - {new Date(item.date).toLocaleDateString()}
+                    Day {sortedItems.length - index} - {new Date(item.date).toLocaleDateString()}
                   </div>
                   <MessageSquare className="h-3 w-3" />
                 </div>
