@@ -137,162 +137,25 @@ export class DatabaseStorage implements IStorage {
     return updatedTasks;
   }
 
-  private async updateProgress(userId: number, tasks: DailyTask) {
+  private async updateProgress(userId: number, updates: Partial<UserProgress>): Promise<void> {
     const [progress] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
-    const dateStr = tasks.date;
-    const currentDate = new Date(dateStr);
-
-    // Get all tasks from the previous day
-    const previousDay = new Date(currentDate);
-    previousDay.setDate(previousDay.getDate() - 1);
-    const [previousDayTasks] = await db.select()
-      .from(dailyTasks)
-      .where(and(
-        eq(dailyTasks.userId, userId),
-        eq(dailyTasks.date, previousDay.toISOString().split('T')[0])
-      ));
-
-    // Get existing tasks for today to prevent duplicate counting
-    const [existingTasks] = await db.select()
-      .from(dailyTasks)
-      .where(and(
-        eq(dailyTasks.userId, userId),
-        eq(dailyTasks.date, dateStr)
-      ));
-
-    let streakDays = progress?.streakDays || 0;
-    let longestStreak = progress?.longestStreak || 0;
-    let perfectDays = progress?.perfectDays || 0;
-    let totalPhotos = progress?.totalPhotos || 0;
-    let totalRestarts = progress?.totalRestarts || 0;
-    let daysLost = progress?.daysLost || 0;
-    let previousStreaks = progress?.previousStreaks || [];
-    let totalWorkouts = progress?.totalWorkouts || 0;
-    let totalWaterGallons = progress?.totalWaterGallons || 0;
-    let totalReadingMinutes = progress?.totalReadingMinutes || 0;
-
-    // Calculate increments for today's tasks
-    const workoutIncrement = (tasks.workout1Complete ? 1 : 0) + (tasks.workout2Complete ? 1 : 0) - 
-      (existingTasks ? (existingTasks.workout1Complete ? 1 : 0) + (existingTasks.workout2Complete ? 1 : 0) : 0);
-
-    const waterIncrement = tasks.waterComplete ? 1 : 0 - (existingTasks?.waterComplete ? 1 : 0);
-    const readingIncrement = tasks.readingComplete ? 10 : 0 - (existingTasks?.readingComplete ? 10 : 0);
-
-    // Check if all tasks are complete for today
-    const isTodayComplete = tasks.workout1Complete &&
-      tasks.workout2Complete &&
-      tasks.waterComplete &&
-      tasks.readingComplete &&
-      tasks.dietComplete &&
-      tasks.photoTaken;
-
-    // Check if yesterday was complete (if it exists)
-    const wasYesterdayComplete = previousDayTasks &&
-      previousDayTasks.workout1Complete &&
-      previousDayTasks.workout2Complete &&
-      previousDayTasks.waterComplete &&
-      previousDayTasks.readingComplete &&
-      previousDayTasks.dietComplete &&
-      previousDayTasks.photoTaken;
-
-    // Calculate streak and perfect days
-    if (isTodayComplete) {
-      if (wasYesterdayComplete || !previousDayTasks) {
-        // Increment streak only if yesterday was complete or if this is the first day
-        streakDays++;
-        if (streakDays > longestStreak) {
-          longestStreak = streakDays;
-        }
-      } else {
-        // If yesterday was incomplete but exists, reset streak
-        if (streakDays > 0) {
-          totalRestarts++;
-          daysLost += streakDays;
-          previousStreaks.push(streakDays);
-        }
-        streakDays = 1; // Start new streak
-      }
-      // Only increment perfect days if this is a new completion
-      if (!existingTasks?.workout1Complete || 
-          !existingTasks?.workout2Complete || 
-          !existingTasks?.waterComplete || 
-          !existingTasks?.readingComplete || 
-          !existingTasks?.dietComplete || 
-          !existingTasks?.photoTaken) {
-        perfectDays++;
-      }
-    } else {
-      // If today is incomplete and we had a streak, record it
-      if (streakDays > 0) {
-        totalRestarts++;
-        daysLost += streakDays;
-        previousStreaks.push(streakDays);
-        streakDays = 0;
-      }
-    }
-
-    // Update total photos only when a new photo is added
-    if (tasks.photoTaken && tasks.photoUrl && (!existingTasks?.photoTaken || !existingTasks?.photoUrl)) {
-      totalPhotos++;
-    }
-
-    // Handle challenge completion
-    if (streakDays === 75) {
-      const user = await this.getUser(userId);
-      if (user) {
-        const stats = user.challengeStats as Record<string, any>;
-        if (user.challengeType === 'custom') {
-          const customChallenges = user.customChallenges as CustomChallenge[];
-          const challenge = customChallenges.find(c => c.id === user.currentCustomChallengeId);
-          if (challenge) {
-            challenge.stats = challenge.stats || { currentUsers: 0, totalCompletions: 0 };
-            challenge.stats.currentUsers--;
-            challenge.stats.totalCompletions++;
-            await db.update(users)
-              .set({ customChallenges })
-              .where(eq(users.id, user.id));
-          }
-        } else if (stats[user.challengeType]) {
-          stats[user.challengeType].currentUsers--;
-          stats[user.challengeType].totalCompletions++;
-          await db.update(users)
-            .set({ challengeStats: stats })
-            .where(eq(users.id, user.id));
-        }
-      }
-    }
-
-    // Update totals with increments
-    totalWorkouts += workoutIncrement;
-    totalWaterGallons += waterIncrement;
-    totalReadingMinutes += readingIncrement;
-
-    const updatedProgress = {
-      ...(progress || {}),
-      userId,
-      totalWorkouts,
-      totalWaterGallons,
-      totalReadingMinutes,
-      streakDays,
-      perfectDays,
-      longestStreak,
-      totalPhotos,
-      totalRestarts,
-      daysLost,
-      previousStreaks,
-      lastRestartDate: streakDays === 0 ? new Date().toISOString().split('T')[0] : progress?.lastRestartDate,
-      stats: progress?.stats || {},
-    };
 
     if (!progress) {
-      await db.insert(userProgress).values(updatedProgress);
+      await db.insert(userProgress).values({
+        userId,
+        ...updates,
+        stats: {},
+      });
     } else {
       await db.update(userProgress)
-        .set(updatedProgress)
+        .set(updates)
         .where(eq(userProgress.id, progress.id));
     }
 
-    await this.checkAndUpdateAchievements(userId, updatedProgress);
+    await this.checkAndUpdateAchievements(userId, {
+      ...progress,
+      ...updates,
+    } as UserProgress);
   }
 
   private async checkAndUpdateAchievements(userId: number, progress: UserProgress) {
@@ -312,7 +175,15 @@ export class DatabaseStorage implements IStorage {
 
       switch (requirement.type) {
         case 'streak':
-          achieved = progress.streakDays >= requirement.count;
+          if (achievement.id === 'comeback_king') {
+            achieved = progress.streakDays >= requirement.count && progress.totalRestarts > 0;
+          } else if (achievement.id === 'perseverance_master') {
+            achieved = progress.streakDays >= requirement.count && progress.totalRestarts > 0;
+          } else if (achievement.id === 'ultimate_warrior') {
+            achieved = progress.streakDays >= requirement.count;
+          } else {
+            achieved = progress.streakDays >= requirement.count;
+          }
           break;
         case 'perfectDays':
           achieved = progress.perfectDays >= requirement.count;

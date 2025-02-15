@@ -8,6 +8,7 @@ import { randomBytes } from "crypto";
 import path from "path";
 import express from "express";
 import fs from "fs";
+import { User } from "@shared/schema";
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), "uploads");
@@ -188,6 +189,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const customChallenges = await storage.getAllCustomChallenges();
     const challengeStats = await storage.getChallengeStats();
     res.json({ customChallenges, challengeStats });
+  });
+
+  app.post("/api/user/reset-achievements", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Please sign in to reset achievements" });
+    }
+
+    const user = await storage.updateUser(req.user.id, {
+      achievements: {},
+    });
+
+    // Reset progress stats related to achievements
+    await storage.updateProgress(req.user.id, {
+      perfectDays: 0,
+      totalPhotos: 0,
+      totalRestarts: 0,
+      daysLost: 0,
+      previousStreaks: [],
+      lastRestartDate: null,
+    });
+
+    res.json(user);
   });
 
   const httpServer = createServer(app);
