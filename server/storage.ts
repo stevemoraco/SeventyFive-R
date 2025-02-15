@@ -144,11 +144,27 @@ export class DatabaseStorage implements IStorage {
       await db.insert(userProgress).values({
         userId,
         ...updates,
-        stats: {},
+        stats: updates.stats || {},
       });
     } else {
       await db.update(userProgress)
-        .set(updates)
+        .set({
+          ...updates,
+          // Ensure all fields are properly reset when stats is being reset
+          ...(updates.stats === {} ? {
+            perfectDays: 0,
+            totalWorkouts: 0,
+            totalWaterGallons: 0,
+            totalReadingMinutes: 0,
+            streakDays: 0,
+            totalPhotos: 0,
+            totalRestarts: 0,
+            daysLost: 0,
+            previousStreaks: [],
+            lastRestartDate: null,
+            longestStreak: 0,
+          } : {}),
+        })
         .where(eq(userProgress.userId, userId));
     }
 
